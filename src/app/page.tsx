@@ -7,6 +7,7 @@
 import EducationForm from "./components/EducationForm";
 import ProfileForm from "./components/ProfileForm";
 import SkillSetForm from "./components/SkillSetForm";
+import UserProfile from "./components/UserProfile";
 import WorkExperienceForm from "./components/WorkExperienceForm";
 // import EducationDisplay from "./components/EducationDisplay";
 // import SkillBubbles from "./components/SkillSet";
@@ -22,7 +23,7 @@ export default function Home() {
       {/* <UserTypeSelector /> */}
       {/* <ProfileForm /> */}
       {/* <SkillBubbles /> */}
-      {/* <UserProfile /> */}
+      <UserProfile />
       {/* <EducationDisplay /> */}
       {/* <SkillBubbles
         skills={[
@@ -32,7 +33,7 @@ export default function Home() {
           // you can pass fewer than 10, it will auto-fill "No Data" circles
         ]}
       /> */}
-      <SkillSetForm />
+      {/* <SkillSetForm /> */}
     </>
   );
 }
