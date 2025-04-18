@@ -1,178 +1,218 @@
 'use client';
 
-import React from 'react';
 import {
     Box,
     Button,
-    Container,
-    Grid,
-    IconButton,
+    Checkbox,
+    FormControlLabel,
     Paper,
+    Stack,
     TextField,
     Typography,
 } from '@mui/material';
-import { useForm, useFieldArray } from 'react-hook-form';
-import * as yup from 'yup';
-import { yupResolver } from '@hookform/resolvers/yup';
-import { AddCircle, RemoveCircle } from '@mui/icons-material';
+import { Formik, FieldArray, getIn } from 'formik';
+import * as Yup from 'yup';
+import dayjs from 'dayjs';
+import { useState } from 'react';
+import CustomDatePicker from './DatePicker';
+import { AddCircle, Delete } from '@mui/icons-material';
+import axios from 'axios';
 
-const schema = yup.object().shape({
-    workExperience: yup.array().of(
-        yup.object().shape({
-            companyName: yup.string().required('Company name is required'),
-            experience: yup
-                .number()
-                .typeError('Must be a number')
-                .positive('Must be positive')
-                .required('Experience is required'),
-        })
-    ),
+const workExperienceSchema = Yup.object().shape({
+    company: Yup.string()
+        .required('Company name is required')
+        .min(2, 'Company name must be at least 2 characters'),
+    jobTitle: Yup.string()
+        .required('Job title is required')
+        .min(2, 'Job title must be at least 2 characters'),
+    startDate: Yup.date()
+        .required('Start date is required')
+        .typeError('Invalid start date'),
+    endDate: Yup.date()
+        .nullable()
+        .when(['currentlyWorking', 'startDate'], {
+            is: (currentlyWorking: boolean, startDate: Date) => !currentlyWorking && !!startDate,
+            then: (schema) =>
+                schema
+                    .required('End date is required')
+                    .typeError('Invalid end date')
+                    .min(Yup.ref('startDate'), 'End date cannot be before start date'),
+            otherwise: (schema) => schema.nullable(),
+        }),
+    currentlyWorking: Yup.boolean(),
 });
 
-type FormValues = {
-    workExperience: {
-        companyName: string;
-        experience: number;
-    }[];
+const validationSchema = Yup.object().shape({
+    workExperience: Yup.array().of(workExperienceSchema),
+});
+
+const initialWorkExperience = {
+    company: '',
+    jobTitle: '',
+    startDate: dayjs(),
+    endDate: null,
+    currentlyWorking: false,
 };
 
-const WorkExperienceForm = () => {
-    const {
-        register,
-        control,
-        handleSubmit,
-        formState: { errors },
-        watch,
-    } = useForm<FormValues>({
-        resolver: yupResolver(schema),
-        defaultValues: {
-            workExperience: [{ companyName: '', experience: 0 }],
-        },
-    });
-
-    const { fields, append, remove } = useFieldArray({
-        control,
-        name: 'workExperience',
-    });
-
-    const onSubmit = (data: FormValues) => {
-        console.log('All Work Experiences:', data);
-        alert('Experiences Submitted!');
-    };
-
-    // Watch the last item
-    const lastItemIndex = fields.length - 1;
-    const lastCompanyName = watch(`workExperience.${lastItemIndex}.companyName`);
-    const lastExperience = watch(`workExperience.${lastItemIndex}.experience`);
-
-    const canAddMore =
-        lastCompanyName?.trim() !== '' &&
-        lastExperience !== undefined &&
-        !isNaN(Number(lastExperience)) &&
-        Number(lastExperience) > 0;
+export default function WorkExperienceForm() {
+    const [submittedData, setSubmittedData] = useState<any>(null);
 
     return (
-        <Container maxWidth="sm" sx={{ py: 6 }}>
-            <Paper
-                elevation={3}
-                sx={{
-                    p: 4,
-                    background: 'linear-gradient(to right, #e3f2fd, #ffffff)',
-                    borderRadius: 3,
-                }}
-            >
-                <Typography variant="h5" fontWeight="bold" textAlign="center" gutterBottom>
-                    Add Work Experience
-                </Typography>
-                <Typography variant="body2" textAlign="center" color="text.secondary" mb={3}>
-                    You can add multiple companies and durations.
+        <Box>
+            <Paper elevation={3} sx={{ p: 4, maxWidth: 700, mx: 'auto', mt: 5 }}>
+                <Typography variant="h5" gutterBottom>
+                    Work Experience
                 </Typography>
 
-                <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
-                    {fields.map((item, index) => (
-                        <Box
-                            key={item.id}
-                            sx={{
-                                mb: 2,
-                                p: 2,
-                                border: '1px solid #ccc',
-                                borderRadius: 2,
-                                // backgroundColor: '#fafafa',
-                            }}
-                        >
-                            <Grid container spacing={2} alignItems="center">
-                                <Grid item xs={12}>
-                                    <TextField
-                                        label="Company Name"
-                                        fullWidth
-                                        {...register(`workExperience.${index}.companyName`)}
-                                        error={!!errors.workExperience?.[index]?.companyName}
-                                        helperText={
-                                            errors.workExperience?.[index]?.companyName?.message
-                                        }
-                                    />
-                                </Grid>
-                                <Grid item xs={12}>
-                                    <TextField
-                                        label="Years of Experience"
-                                        type="number"
-                                        fullWidth
-                                        {...register(`workExperience.${index}.experience`)}
-                                        error={!!errors.workExperience?.[index]?.experience}
-                                        helperText={
-                                            errors.workExperience?.[index]?.experience?.message
-                                        }
-                                        InputProps={{
-                                            inputProps: {
-                                                style: {
-                                                    MozAppearance: 'textfield',
-                                                },
-                                            },
-                                            sx: {
-                                                '& input[type=number]::-webkit-outer-spin-button': {
-                                                    WebkitAppearance: 'none',
-                                                    margin: 0,
-                                                },
-                                                '& input[type=number]::-webkit-inner-spin-button': {
-                                                    WebkitAppearance: 'none',
-                                                    margin: 0,
-                                                },
-                                            },
-                                        }}
-                                    />
-                                </Grid>
-                                <Grid item xs={2} sx={{ textAlign: 'center' }}>
-                                    {fields.length > 1 && (
-                                        <IconButton onClick={() => remove(index)} color="error">
-                                            <RemoveCircle />
-                                        </IconButton>
-                                    )}
-                                </Grid>
-                            </Grid>
-                        </Box>
-                    ))}
+                <Formik
+                    initialValues={{ workExperience: [initialWorkExperience] }}
+                    validationSchema={validationSchema}
+                    onSubmit={async (values, { resetForm }) => {
+                        const payload = values.workExperience.map((exp) => ({
+                            company: exp.company,
+                            jobTitle: exp.jobTitle,
+                            startDate: dayjs(exp.startDate).format('YYYY-MM-DD'),
+                            endDate: exp.endDate
+                                ? dayjs(exp.endDate).format('YYYY-MM-DD')
+                                : null,
+                            currentlyWorking: exp.currentlyWorking,
+                        }));
 
-                    {/* Conditionally show Add More button */}
-                    {canAddMore && (
-                        <Box display="flex" justifyContent="flex-start" mb={3}>
-                            <Button
-                                onClick={() => append({ companyName: '', experience: 0 })}
-                                startIcon={<AddCircle />}
-                                variant="outlined"
-                                sx={{ width: 'fit-content' }}
-                            >
-                                Add More
-                            </Button>
-                        </Box>
+                        try {
+                            const res = await axios.post('/api/experience', payload, {
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    Authorization: `Bearer ${"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3ZjdjNWU3YWE5MGVlOWNkYzEwNmE3NyIsImVtYWlsIjoidGVzdDAxQG1haWwuY29tIiwiaWF0IjoxNzQ0MzUxMjA0LCJleHAiOjE3NDQ5NTYwMDR9.yjCoF5I9b1D4BYir9N9Vx2JIFJ_UGyYrBYgUi2Lsl0c"}`,
+
+                                },
+                            });
+
+                            if (!res.ok) throw new Error('Failed to submit data');
+                            setSubmittedData(payload);
+                            resetForm();
+                        } catch (err) {
+                            console.error('Error submitting data:', err);
+                        }
+                    }}
+                >
+                    {({ values, handleChange, handleSubmit, setFieldValue, touched, errors }) => (
+                        <form onSubmit={handleSubmit}>
+                            <FieldArray name="workExperience">
+                                {({ push, remove }) => (
+                                    <Stack spacing={4}>
+                                        {values.workExperience.map((item, index) => {
+                                            const fieldName = `workExperience.${index}`;
+                                            return (
+                                                <Paper
+                                                    key={index}
+                                                    elevation={2}
+                                                    sx={{ p: 3, position: 'relative' }}
+                                                >
+                                                    <Stack spacing={2}>
+                                                        <TextField
+                                                            label="Company"
+                                                            name={`${fieldName}.company`}
+                                                            fullWidth
+                                                            value={item.company}
+                                                            onChange={handleChange}
+                                                            error={
+                                                                getIn(touched, `${fieldName}.company`) &&
+                                                                Boolean(getIn(errors, `${fieldName}.company`))
+                                                            }
+                                                            helperText={
+                                                                getIn(touched, `${fieldName}.company`) &&
+                                                                getIn(errors, `${fieldName}.company`)
+                                                            }
+                                                        />
+
+                                                        <TextField
+                                                            label="Job Title"
+                                                            name={`${fieldName}.jobTitle`}
+                                                            fullWidth
+                                                            value={item.jobTitle}
+                                                            onChange={handleChange}
+                                                            error={
+                                                                getIn(touched, `${fieldName}.jobTitle`) &&
+                                                                Boolean(getIn(errors, `${fieldName}.jobTitle`))
+                                                            }
+                                                            helperText={
+                                                                getIn(touched, `${fieldName}.jobTitle`) &&
+                                                                getIn(errors, `${fieldName}.jobTitle`)
+                                                            }
+                                                        />
+
+                                                        <CustomDatePicker
+                                                            formik={{ setFieldValue, errors, touched }}
+                                                            label="Start Date"
+                                                            name={`${fieldName}.startDate`}
+                                                            value={item.startDate}
+                                                        />
+
+                                                        {!item.currentlyWorking && (
+                                                            <CustomDatePicker
+                                                                formik={{ setFieldValue, errors, touched }}
+                                                                label="End Date"
+                                                                name={`${fieldName}.endDate`}
+                                                                value={item.endDate}
+                                                            />
+                                                        )}
+
+                                                        <FormControlLabel
+                                                            control={
+                                                                <Checkbox
+                                                                    name={`${fieldName}.currentlyWorking`}
+                                                                    checked={item.currentlyWorking}
+                                                                    onChange={handleChange}
+                                                                />
+                                                            }
+                                                            label="Currently Working"
+                                                        />
+
+                                                        {index > 0 && (
+                                                            <Button
+                                                                onClick={() => remove(index)}
+                                                                size="small"
+                                                                variant="outlined"
+                                                                color="error"
+                                                                startIcon={<Delete />}
+                                                            >
+                                                                Remove
+                                                            </Button>
+                                                        )}
+                                                    </Stack>
+                                                </Paper>
+                                            );
+                                        })}
+
+                                        <Box display="flex" justifyContent="flex-start">
+                                            <Button
+                                                variant="outlined"
+                                                startIcon={<AddCircle />}
+                                                onClick={() => push(initialWorkExperience)}
+                                            >
+                                                Add More Experience
+                                            </Button>
+                                        </Box>
+
+                                        <Button type="submit" variant="contained" color="primary">
+                                            Submit All Experiences
+                                        </Button>
+                                    </Stack>
+                                )}
+                            </FieldArray>
+                        </form>
                     )}
-
-                    <Button type="submit" variant="contained" size="large" fullWidth>
-                        Submit All Experience
-                    </Button>
-                </Box>
+                </Formik>
             </Paper>
-        </Container>
-    );
-};
 
-export default WorkExperienceForm;
+            {submittedData && (
+                <Box mt={5}>
+                    <Typography variant="h6" textAlign="center">
+                        Submitted Data:
+                    </Typography>
+                    <pre>{JSON.stringify(submittedData, null, 2)}</pre>
+                </Box>
+            )}
+        </Box>
+    );
+}

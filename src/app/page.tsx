@@ -4,11 +4,11 @@
 
 // import WorkExperienceBar from "./components/WorkExperienceBar";
 
-import EducationForm from "./components/EducationForm";
-import ProfileForm from "./components/ProfileForm";
-import SkillSetForm from "./components/SkillSetForm";
-import UserProfile from "./components/UserProfile";
-import WorkExperienceForm from "./components/WorkExperienceForm";
+
+// import EducationForm from "./components/EducationForm";
+import SkillsForm from "./components/SkillSetForm";
+// import WorkExperienceForm from "./components/WorkExperienceForm";
+// import UserProfile from "./components/UserProfile";
 // import EducationDisplay from "./components/EducationDisplay";
 // import SkillBubbles from "./components/SkillSet";
 // import SkillProgressBar from "./components/SkillSet";
@@ -23,7 +23,8 @@ export default function Home() {
       {/* <UserTypeSelector /> */}
       {/* <ProfileForm /> */}
       {/* <SkillBubbles /> */}
-      <UserProfile />
+      <SkillsForm />
+      {/* <WorkExperienceForm1 /> */}
       {/* <EducationDisplay /> */}
       {/* <SkillBubbles
         skills={[

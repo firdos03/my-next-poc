@@ -1,197 +1,198 @@
 'use client';
 
-import React from 'react';
 import {
     Box,
     Button,
-    Container,
-    Grid,
-    IconButton,
     Paper,
+    Stack,
     TextField,
     Typography,
 } from '@mui/material';
-import { useForm, useFieldArray } from 'react-hook-form';
-import { AddCircle, RemoveCircle } from '@mui/icons-material';
-import { yupResolver } from '@hookform/resolvers/yup';
-import * as yup from 'yup';
+import { Formik, FieldArray, getIn } from 'formik';
+import * as Yup from 'yup';
+import dayjs from 'dayjs';
+import { useState } from 'react';
+import CustomDatePicker from './DatePicker'; // Reuse your existing component
+import { AddCircle, Delete } from '@mui/icons-material';
+import axios from 'axios';
 
-const educationSchema = yup.object().shape({
-    education: yup.array().of(
-        yup.object().shape({
-            degree: yup.string().required('Degree is required'),
-            fieldOfStudy: yup.string().required('Field of Study is required'),
-            completionYear: yup
-                .number()
-                .typeError('Must be a number')
-                .min(1950, 'Year must be after 1950')
-                .max(new Date().getFullYear() + 5, 'Enter a valid future year')
-                .required('Completion Year is required'),
-        })
-    ),
+const educationSchema = Yup.object().shape({
+    degree: Yup.string().required('Degree is required'),
+    institution: Yup.string().required('Institution is required'),
+    startDate: Yup.date().required('Start date is required').typeError('Invalid start date'),
+    endDate: Yup.date()
+        .required('End date is required')
+        .typeError('Invalid end date')
+        .min(Yup.ref('startDate'), 'End date cannot be before start date'),
+    fieldOfStudy: Yup.string(),
+    grade: Yup.string(),
+    description: Yup.string(),
 });
 
-type EducationFormValues = {
-    education: {
-        degree: string;
-        fieldOfStudy: string;
-        completionYear: number;
-    }[];
+const validationSchema = Yup.object().shape({
+    education: Yup.array().of(educationSchema),
+});
+
+const initialEducation = {
+    degree: '',
+    institution: '',
+    startDate: dayjs(),
+    endDate: dayjs(),
+    fieldOfStudy: '',
+    grade: '',
+    description: '',
 };
 
-const EducationForm = () => {
-    const {
-        register,
-        control,
-        handleSubmit,
-        formState: { errors },
-        watch,
-    } = useForm<EducationFormValues>({
-        resolver: yupResolver(educationSchema),
-        defaultValues: {
-            education: [{ degree: '', fieldOfStudy: '', completionYear: new Date().getFullYear() }],
-        },
-    });
-
-    const { fields, append, remove } = useFieldArray({
-        control,
-        name: 'education',
-    });
-
-    const onSubmit = (data: EducationFormValues) => {
-        console.log('Education Data:', data);
-        alert('Education details submitted!');
-    };
-
-    const lastIndex = fields.length - 1;
-    const lastDegree = watch(`education.${lastIndex}.degree`);
-    const lastField = watch(`education.${lastIndex}.fieldOfStudy`);
-    const lastYear = watch(`education.${lastIndex}.completionYear`);
-
-    const canAddMore =
-        lastDegree?.trim() &&
-        lastField?.trim() &&
-        lastYear &&
-        !isNaN(Number(lastYear)) &&
-        Number(lastYear) >= 1950;
+export default function EducationForm() {
+    const [submittedData, setSubmittedData] = useState<any>(null);
 
     return (
-        <Container maxWidth="sm" sx={{ py: 6 }}>
-            <Paper
-                elevation={3}
-                sx={{
-                    p: 4,
-                    background: 'linear-gradient(to right, #e3f2fd, #ffffff)',
-                    borderRadius: 3,
-                    boxShadow: 2,
-                }}
-            >
-                <Typography variant="h5" fontWeight="bold" textAlign="center" gutterBottom>
-                    Educational Qualifications
-                </Typography>
-                <Typography variant="body2" textAlign="center" color="text.secondary" mb={3}>
-                    You can add your degrees, field of study, and year of completion.
+        <Box>
+            <Paper elevation={3} sx={{ p: 4, maxWidth: 700, mx: 'auto', mt: 5 }}>
+                <Typography variant="h5" gutterBottom>
+                    Education Details
                 </Typography>
 
-                <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
-                    {fields.map((item, index) => (
-                        <Box
-                            key={item.id}
-                            sx={{
-                                mb: 2,
-                                p: 2,
-                                border: '1px solid #ccc',
-                                borderRadius: 2,
-                            }}
-                        >
-                            <Grid container spacing={2} alignItems="center">
-                                <Grid item xs={12}>
-                                    <TextField
-                                        label="Degree"
-                                        fullWidth
-                                        {...register(`education.${index}.degree`)}
-                                        error={!!errors.education?.[index]?.degree}
-                                        helperText={errors.education?.[index]?.degree?.message}
-                                    />
-                                </Grid>
-                                <Grid item xs={12}>
-                                    <TextField
-                                        label="Field of Study"
-                                        fullWidth
-                                        {...register(`education.${index}.fieldOfStudy`)}
-                                        error={!!errors.education?.[index]?.fieldOfStudy}
-                                        helperText={
-                                            errors.education?.[index]?.fieldOfStudy?.message
-                                        }
-                                    />
-                                </Grid>
-                                <Grid item xs={10}>
-                                    <TextField
-                                        label="Completion Year"
-                                        type="number"
-                                        fullWidth
-                                        {...register(`education.${index}.completionYear`)}
-                                        error={!!errors.education?.[index]?.completionYear}
-                                        helperText={
-                                            errors.education?.[index]?.completionYear?.message
-                                        }
-                                        InputProps={{
-                                            inputProps: {
-                                                style: {
-                                                    MozAppearance: 'textfield',
-                                                },
-                                            },
-                                            sx: {
-                                                '& input[type=number]::-webkit-outer-spin-button': {
-                                                    WebkitAppearance: 'none',
-                                                    margin: 0,
-                                                },
-                                                '& input[type=number]::-webkit-inner-spin-button': {
-                                                    WebkitAppearance: 'none',
-                                                    margin: 0,
-                                                },
-                                            },
-                                        }}
-                                    />
-                                </Grid>
-                                <Grid item xs={2} sx={{ textAlign: 'center' }}>
-                                    {fields.length > 1 && (
-                                        <IconButton onClick={() => remove(index)} color="error">
-                                            <RemoveCircle />
-                                        </IconButton>
-                                    )}
-                                </Grid>
-                            </Grid>
-                        </Box>
-                    ))}
+                <Formik
+                    initialValues={{ education: [initialEducation] }}
+                    validationSchema={validationSchema}
+                    onSubmit={async (values, { resetForm }) => {
+                        try {
+                            const res = await axios.post('/api/education', values.education, {
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    Authorization: `Bearer ${"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3ZjdjNWU3YWE5MGVlOWNkYzEwNmE3NyIsImVtYWlsIjoidGVzdDAxQG1haWwuY29tIiwiaWF0IjoxNzQ0MzUxMjA0LCJleHAiOjE3NDQ5NTYwMDR9.yjCoF5I9b1D4BYir9N9Vx2JIFJ_UGyYrBYgUi2Lsl0c"}`,
 
-                    {/* Add More Button */}
-                    {canAddMore && (
-                        <Box display="flex" justifyContent="flex-start" mb={3}>
-                            <Button
-                                onClick={() =>
-                                    append({
-                                        degree: '',
-                                        fieldOfStudy: '',
-                                        completionYear: new Date().getFullYear(),
-                                    })
-                                }
-                                startIcon={<AddCircle />}
-                                variant="outlined"
-                                sx={{ width: 'fit-content' }}
-                            >
-                                Add More
-                            </Button>
-                        </Box>
+                                },
+                            });
+
+                            if (!res.data) throw new Error('Failed to submit data');
+                            setSubmittedData(values.education);
+                            resetForm();
+                        } catch (err) {
+                            console.error('Error submitting education:', err);
+                        }
+                    }}
+                >
+                    {({ values, handleChange, handleSubmit, setFieldValue, touched, errors }) => (
+                        <form onSubmit={handleSubmit}>
+                            <FieldArray name="education">
+                                {({ push, remove }) => (
+                                    <Stack spacing={4}>
+                                        {values.education.map((item, index) => {
+                                            const fieldName = `education.${index}`;
+                                            return (
+                                                <Paper
+                                                    key={index}
+                                                    elevation={2}
+                                                    sx={{ p: 3, position: 'relative' }}
+                                                >
+                                                    <Stack spacing={2}>
+                                                        <TextField
+                                                            label="Degree"
+                                                            name={`${fieldName}.degree`}
+                                                            fullWidth
+                                                            value={item.degree}
+                                                            onChange={handleChange}
+                                                            error={Boolean(getIn(errors, `${fieldName}.degree`) && getIn(touched, `${fieldName}.degree`))}
+                                                            helperText={getIn(touched, `${fieldName}.degree`) && getIn(errors, `${fieldName}.degree`)}
+                                                        />
+
+                                                        <TextField
+                                                            label="Institution"
+                                                            name={`${fieldName}.institution`}
+                                                            fullWidth
+                                                            value={item.institution}
+                                                            onChange={handleChange}
+                                                            error={Boolean(getIn(errors, `${fieldName}.institution`) && getIn(touched, `${fieldName}.institution`))}
+                                                            helperText={getIn(touched, `${fieldName}.institution`) && getIn(errors, `${fieldName}.institution`)}
+                                                        />
+
+                                                        <TextField
+                                                            label="Field of Study"
+                                                            name={`${fieldName}.fieldOfStudy`}
+                                                            fullWidth
+                                                            value={item.fieldOfStudy}
+                                                            onChange={handleChange}
+                                                        />
+
+                                                        <TextField
+                                                            label="Grade"
+                                                            name={`${fieldName}.grade`}
+                                                            fullWidth
+                                                            value={item.grade}
+                                                            onChange={handleChange}
+                                                        />
+
+                                                        <CustomDatePicker
+                                                            label="Start Date"
+                                                            name={`${fieldName}.startDate`}
+                                                            value={item.startDate}
+                                                            formik={{ setFieldValue, errors, touched }}
+                                                        />
+
+                                                        <CustomDatePicker
+                                                            label="End Date"
+                                                            name={`${fieldName}.endDate`}
+                                                            value={item.endDate}
+                                                            formik={{ setFieldValue, errors, touched }}
+                                                        />
+
+                                                        <TextField
+                                                            label="Description"
+                                                            name={`${fieldName}.description`}
+                                                            fullWidth
+                                                            multiline
+                                                            minRows={2}
+                                                            value={item.description}
+                                                            onChange={handleChange}
+                                                        />
+
+                                                        {index > 0 && (
+                                                            <Button
+                                                                onClick={() => remove(index)}
+                                                                size="small"
+                                                                variant="outlined"
+                                                                color="error"
+                                                                startIcon={<Delete />}
+                                                            >
+                                                                Remove
+                                                            </Button>
+                                                        )}
+                                                    </Stack>
+                                                </Paper>
+                                            );
+                                        })}
+
+                                        <Box display="flex" justifyContent="flex-start">
+                                            <Button
+                                                variant="outlined"
+                                                startIcon={<AddCircle />}
+                                                onClick={() => push(initialEducation)}
+                                            >
+                                                Add More Education
+                                            </Button>
+                                        </Box>
+
+                                        <Button type="submit" variant="contained" color="primary">
+                                            Submit All Educations
+                                        </Button>
+                                    </Stack>
+                                )}
+                            </FieldArray>
+                        </form>
                     )}
-
-                    <Button type="submit" variant="contained" size="large" fullWidth>
-                        Submit Education
-                    </Button>
-                </Box>
+                </Formik>
             </Paper>
-        </Container>
-    );
-};
 
-export default EducationForm;
+            {submittedData && (
+                <Box mt={5}>
+                    <Typography variant="h6" textAlign="center">
+                        Submitted Data:
+                    </Typography>
+                    <pre>{JSON.stringify(submittedData, null, 2)}</pre>
+                </Box>
+            )}
+        </Box>
+    );
+}

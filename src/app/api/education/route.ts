@@ -23,42 +23,45 @@ export async function POST(req: NextRequest) {
   await connectDB();
 
   const userId = getUserIdFromToken(req);
-  if (!userId)
+  if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const body = await req.json();
-  const {
-    degree,
-    institution,
-    startDate,
-    endDate,
-    fieldOfStudy,
-    grade,
-    description,
-  } = body;
-
-  if (!degree || !institution || !startDate || !endDate) {
-    return NextResponse.json(
-      { error: "Required fields missing" },
-      { status: 400 }
-    );
   }
 
   try {
-    const education = await Education.create({
-      userId,
-      degree,
-      institution,
-      startDate,
-      endDate,
-      fieldOfStudy,
-      grade,
-      description,
-    });
+    const body = await req.json();
 
-    return NextResponse.json({ message: "Education added", education });
-  } catch (err) {
-    console.error("POST error:", err);
+    const educations = Array.isArray(body) ? body : [body];
+
+    const invalidEntry = educations.find(
+      (edu) => !edu.degree || !edu.institution || !edu.startDate || !edu.endDate
+    );
+
+    if (invalidEntry) {
+      return NextResponse.json(
+        { error: "Required fields missing in one or more entries" },
+        { status: 400 }
+      );
+    }
+
+    const entriesToInsert = educations.map((edu) => ({
+      userId,
+      degree: edu.degree,
+      institution: edu.institution,
+      startDate: edu.startDate,
+      endDate: edu.endDate,
+      fieldOfStudy: edu.fieldOfStudy || "",
+      grade: edu.grade || "",
+      description: edu.description || "",
+    }));
+
+    const savedEducations = await Education.insertMany(entriesToInsert);
+
+    return NextResponse.json(
+      { message: "Education entries added successfully", savedEducations },
+      { status: 201 }
+    );
+  } catch (error) {
+    console.error("POST error:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

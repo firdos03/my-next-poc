@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document } from "mongoose";
+import { Schema, Document, models, model } from "mongoose";
 
 export interface EducationType extends Document {
   userId: string;
@@ -11,19 +11,46 @@ export interface EducationType extends Document {
   description?: string;
 }
 
-const EducationSchema: Schema = new Schema(
+const EducationSchema: Schema<EducationType> = new Schema(
   {
-    userId: { type: String, required: true },
-    degree: { type: String, required: true },
-    institution: { type: String, required: true },
-    startDate: { type: Date, required: true },
-    endDate: { type: Date, required: true },
-    fieldOfStudy: { type: String },
-    grade: { type: String },
-    description: { type: String },
+    userId: {
+      type: String,
+      ref: "User",
+      required: true,
+    },
+    degree: {
+      type: String,
+      required: true,
+    },
+    institution: {
+      type: String,
+      required: true,
+    },
+    fieldOfStudy: {
+      type: String,
+      default: "",
+    },
+    grade: {
+      type: String,
+      default: "",
+    },
+    startDate: {
+      type: Date,
+      required: true,
+    },
+    endDate: {
+      type: Date,
+      required: true,
+    },
+    description: {
+      type: String,
+      default: "",
+    },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  }
 );
 
-export default mongoose.models.Education ||
-  mongoose.model<EducationType>("Education", EducationSchema);
+export default models.Education ||
+  model<EducationType>("Education", EducationSchema);

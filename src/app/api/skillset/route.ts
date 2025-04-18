@@ -28,7 +28,6 @@ export async function POST(req: NextRequest) {
 
   const { userId, skills } = body;
 
-  // Validate inputs
   if (!userId || !Array.isArray(skills) || skills.length === 0) {
     return NextResponse.json(
       { error: "userId and skills array are required" },
@@ -36,7 +35,6 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Prepare skills to insert
   const skillsToInsert = skills.map((skill) => ({
     userId,
     name: skill.name,

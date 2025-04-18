@@ -10,6 +10,7 @@ import axios from "axios"
 
 
 const UserProfile = () => {
+    // const [userData, setUserData] = useState([]);
     const user = {
         fullName: 'John Doe',
         designation: 'Frontend Developer',
@@ -22,12 +23,18 @@ const UserProfile = () => {
     };
 
 
-    // useEffect(()=>{
-    //     const fetchUserData = async () =>{
-    //         const result = await axios.get("http://localhost:3000/api/userprofile")
-    //     }
+    useEffect(() => {
+        // console.log("checking useEffect");
+        // debugger
 
-    // },[])
+        const fetchUserData = async () => {
+            const result = await axios.get("http://localhost:3000/api/userprofile")
+            console.log("result", result);
+
+            // setUserData()
+        }
+        fetchUserData()
+    }, [])
 
 
 
@@ -56,7 +63,6 @@ const UserProfile = () => {
                     boxShadow: 3,
                 }}
             >
-                {/* Profile Image */}
                 <Box sx={{ flexShrink: 0 }}>
                     <Avatar
                         src={user.profileImage}

@@ -1,291 +1,150 @@
-"use client";
-import React from 'react';
+'use client'
 import {
-    Box,
     Button,
-    Container,
-    Grid,
     TextField,
     Typography,
-    MenuItem,
-    InputLabel,
-    Select,
-    FormControl,
-    Avatar,
     Paper,
-    Autocomplete,
-} from '@mui/material';
-import { useForm, Controller } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
-import * as yup from 'yup';
+    Stack,
+} from '@mui/material'
+import axios from 'axios'
+import { Formik, Form } from 'formik'
+import * as Yup from 'yup'
 
-const educationOptions = ['High School', 'Diploma', "Bachelor's", 'Master\'s', 'PhD'];
-const skillsList = ['JavaScript', 'React', 'Node.js', 'Python', 'TypeScript', 'SQL', 'CSS', 'HTML'];
-const popularIndianCities = [
-    "Mumbai",
-    "Delhi",
-    "Bengaluru",
-    "Hyderabad",
-    "Chennai",
-    "Kolkata",
-    "Pune",
-    "Ahmedabad",
-    "Jaipur",
-    "Surat",
-    "Lucknow",
-    "Chandigarh",
-    "Bhopal",
-    "Indore",
-    "Nagpur",
-    "Patna",
-    "Visakhapatnam",
-    "Kanpur",
-    "Coimbatore",
-    "Thiruvananthapuram",
-    "Vijayawada",
-    "Ludhiana",
-    "Guwahati",
-    "Rajkot",
-    "Amritsar",
-    "Varanasi",
-    "Mysore",
-    "Dehradun",
-    "Noida",
-    "Faridabad"
-];
+// Validation Schema using Yup
+const validationSchema = Yup.object({
+    fullName: Yup.string()
+        .required('Full name is required')
+        .min(3, 'Too short'),
+    profileImage: Yup.string()
+        .url('Must be a valid URL')
+        .nullable(),
+    location: Yup.string().required('Location is required'),
+    designation: Yup.string().required('Designation is required'),
+    mobileNumber: Yup.string()
+        .required('Mobile number is required')
+        .matches(/^[0-9]{10}$/, 'Must be a valid 10-digit number'),
+})
 
-const schema = yup.object().shape({
-    fullName: yup.string().required('Full name is required'),
-    designation: yup.string().required('Designation is required'),
-    experience: yup.string().required('Work experience is required'),
-    education: yup.string().required('Education is required'),
-    dob: yup.string().required('Date of Birth is required'),
-    skills: yup.array().min(1, 'Select at least one skill'),
-    location: yup.string().required('Location is required'),
-    mobile: yup
-        .string()
-        .matches(/^[0-9]{10}$/, 'Mobile number must be 10 digits')
-        .required('Mobile number is required'),
-    profileImage: yup.mixed().required('Profile image is required'),
-});
+export default function UserForm() {
+    const postUserData = async (userData: any) => {
+        try {
+            const response = await axios.post(
+                "http://localhost:3000/api/userprofile",
+                userData,
+                {
+                    headers: {
+                        Authorization: `Bearer ${"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3ZjdjNWU3YWE5MGVlOWNkYzEwNmE3NyIsImVtYWlsIjoidGVzdDAxQG1haWwuY29tIiwiaWF0IjoxNzQ0MzUxMjA0LCJleHAiOjE3NDQ5NTYwMDR9.yjCoF5I9b1D4BYir9N9Vx2JIFJ_UGyYrBYgUi2Lsl0c"}`,
+                        'Content-Type': 'application/json',
+                    },
+                }
+            )
 
-const ProfileForm = () => {
-    const {
-        register,
-        control,
-        handleSubmit,
-        formState: { errors },
-        setValue,
-        watch,
-    } = useForm({
-        resolver: yupResolver(schema),
-        defaultValues: {
-            skills: [],
-        },
-    });
+            
 
-    const onSubmit = (data: any) => {
-        console.log('Form Data:', data);
-        alert('Form Submitted!');
-    };
-
-    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            setValue('profileImage', file);
+            console.log('User data posted successfully:', response.data)
+        } catch (error) {
+            console.error('Error posting user data:', error)
         }
-    };
-
+    }
     return (
-        <Container maxWidth="sm" sx={{ py: 6 }}>
-            <Paper elevation={3} sx={{
-                p: 4, background: 'linear-gradient(to right, #e3f2fd, #ffffff)',
-                borderRadius: 3,
-                boxShadow: 2,
-            }}>
-                <Typography variant="h4" fontWeight="bold" textAlign="center" gutterBottom>
-                    User Profile
-                </Typography>
-                <Typography variant="body1" textAlign="center" color="text.secondary" mb={4}>
-                    Fill out your details to build your profile.
-                </Typography>
+        <Paper elevation={3} sx={{ p: 4, maxWidth: 500, mx: 'auto', mt: 8 }}>
+            <Typography variant="h5" component="h1" gutterBottom align="center">
+                User Profile Form
+            </Typography>
 
-                <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
-                    <Grid item xs={12} sx={{mb: 4}}>
-                        <Box display="flex" flexDirection="column" alignItems="center">
-                            <Button variant="outlined" component="label">
-                                Upload Profile Image
-                                <input type="file" hidden accept="image/*" onChange={handleImageUpload} />
-                            </Button>
-
-                            {watch('profileImage') && (
-                                <Box mt={2} display="flex" alignItems="center" gap={2}>
-                                    <Avatar
-                                        src={URL.createObjectURL(watch('profileImage') as File)}
-                                        alt="Profile"
-                                        sx={{ width: 60, height: 60 }}
-                                    />
-                                    <Typography>{(watch('profileImage') as File)?.name}</Typography>
-                                </Box>
-                            )}
-                            {errors.profileImage && (
-                                <Typography color="error" fontSize="0.8rem" mt={1}>
-                                    {errors.profileImage.message as string}
-                                </Typography>
-                            )}
-                        </Box>
-                    </Grid>
-
-
-                    <Grid container spacing={3} direction="column">
-                        <Grid item xs={12}>
+            <Formik
+                initialValues={{
+                    fullName: '',
+                    profileImage: '',
+                    location: '',
+                    designation: '',
+                    mobileNumber: '',
+                }}
+                validationSchema={validationSchema}
+                onSubmit={(values, { setSubmitting }) => {
+                    console.log('Submitted values:', values)
+                    setSubmitting(false)
+                    postUserData(values)
+                }}
+            >
+                {({
+                    errors,
+                    touched,
+                    handleChange,
+                    handleBlur,
+                    values,
+                    isSubmitting,
+                }) => (
+                    <Form noValidate>
+                        <Stack spacing={3}>
                             <TextField
                                 label="Full Name"
+                                name="fullName"
                                 fullWidth
-                                {...register('fullName')}
-                                error={!!errors.fullName}
-                                helperText={errors.fullName?.message}
+                                value={values.fullName}
+                                onChange={handleChange}
+                                onBlur={handleBlur}
+                                error={touched.fullName && Boolean(errors.fullName)}
+                                helperText={touched.fullName && errors.fullName}
                             />
-                        </Grid>
 
-                        <Grid item xs={12}>
+                            <TextField
+                                label="Profile Image URL"
+                                name="profileImage"
+                                fullWidth
+                                value={values.profileImage}
+                                onChange={handleChange}
+                                onBlur={handleBlur}
+                                error={touched.profileImage && Boolean(errors.profileImage)}
+                                helperText={touched.profileImage && errors.profileImage}
+                            />
+
+                            <TextField
+                                label="Location"
+                                name="location"
+                                fullWidth
+                                value={values.location}
+                                onChange={handleChange}
+                                onBlur={handleBlur}
+                                error={touched.location && Boolean(errors.location)}
+                                helperText={touched.location && errors.location}
+                            />
+
                             <TextField
                                 label="Designation"
+                                name="designation"
                                 fullWidth
-                                {...register('designation')}
-                                error={!!errors.designation}
-                                helperText={errors.designation?.message}
+                                value={values.designation}
+                                onChange={handleChange}
+                                onBlur={handleBlur}
+                                error={touched.designation && Boolean(errors.designation)}
+                                helperText={touched.designation && errors.designation}
                             />
-                        </Grid>
 
-                        <Grid item xs={12}>
-                            <TextField
-                                label="Total Work Experience (e.g. 3 years)"
-                                fullWidth
-                                {...register('experience')}
-                                error={!!errors.experience}
-                                helperText={errors.experience?.message}
-                            />
-                        </Grid>
-
-                        {/* <Grid item xs={12}>
-                            <FormControl fullWidth error={!!errors.education}>
-                                <InputLabel>Highest Education</InputLabel>
-                                <Select
-                                    label="Highest Education"
-                                    defaultValue=""
-                                    {...register('education')}
-                                >
-                                    {educationOptions.map((edu) => (
-                                        <MenuItem key={edu} value={edu}>
-                                            {edu}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                                <Typography color="error" fontSize="0.8rem">
-                                    {errors.education?.message}
-                                </Typography>
-                            </FormControl>
-                        </Grid> */}
-
-                        {/* <Grid item xs={12}>
-                            <TextField
-                                label="Date of Birth"
-                                type="date"
-                                fullWidth
-                                InputLabelProps={{ shrink: true }}
-                                {...register('dob')}
-                                error={!!errors.dob}
-                                helperText={errors.dob?.message}
-                            />
-                        </Grid> */}
-
-                        {/* <Grid item xs={12}>
-                            <FormControl fullWidth error={!!errors.skills}>
-                                <Controller
-                                    name="skills"
-                                    control={control}
-                                    render={({ field }) => (
-                                        <Autocomplete
-                                            multiple
-                                            options={skillsList}
-                                            value={field.value || []}
-                                            onChange={(_, value) => field.onChange(value)}
-                                            renderInput={(params) => (
-                                                <TextField
-                                                    {...params}
-                                                    label="Skills"
-                                                    error={!!errors.skills}
-                                                    helperText={errors.skills?.message}
-                                                />
-                                            )}
-                                        />
-                                    )}
-                                />
-                            </FormControl>
-                        </Grid> */}
-
-                        <Grid item xs={12}>
-                            <Controller
-                                name="location"
-                                control={control}
-                                render={({ field }) => (
-                                    <Autocomplete
-                                        options={popularIndianCities}
-                                        value={field.value || ''}
-                                        onChange={(_, value) => field.onChange(value)}
-                                        renderInput={(params) => (
-                                            <TextField
-                                                {...params}
-                                                label="Location"
-                                                fullWidth
-                                                error={!!errors.location}
-                                                helperText={errors.location?.message}
-                                            />
-                                        )}
-                                    />
-                                )}
-                            />
-                        </Grid>
-
-
-                        <Grid item xs={12}>
                             <TextField
                                 label="Mobile Number"
+                                name="mobileNumber"
                                 fullWidth
-                                {...register('mobile')}
-                                error={!!errors.mobile}
-                                helperText={errors.mobile?.message}
-                                type="number"
-                                InputProps={{
-                                    inputProps: {
-                                        style: {
-                                            MozAppearance: 'textfield',
-                                        },
-                                    },
-                                    sx: {
-                                        '& input[type=number]::-webkit-outer-spin-button': {
-                                            WebkitAppearance: 'none',
-                                            margin: 0,
-                                        },
-                                        '& input[type=number]::-webkit-inner-spin-button': {
-                                            WebkitAppearance: 'none',
-                                            margin: 0,
-                                        },
-                                    },
-                                }}
+                                value={values.mobileNumber}
+                                onChange={handleChange}
+                                onBlur={handleBlur}
+                                error={touched.mobileNumber && Boolean(errors.mobileNumber)}
+                                helperText={touched.mobileNumber && errors.mobileNumber}
                             />
-                        </Grid>
-                        <Grid item xs={12}>
-                            <Button type="submit" variant="contained" size="large" fullWidth sx={{ mt: 2 }}>
-                                Next
-                            </Button>
-                        </Grid>
-                    </Grid>
-                </Box>
-            </Paper>
-        </Container>
-    );
-};
 
-export default ProfileForm;
+                            <Button
+                                type="submit"
+                                variant="contained"
+                                color="primary"
+                                fullWidth
+                                disabled={isSubmitting}
+                            >
+                                Submit
+                            </Button>
+                        </Stack>
+                    </Form>
+                )}
+            </Formik>
+        </Paper>
+    )
+}

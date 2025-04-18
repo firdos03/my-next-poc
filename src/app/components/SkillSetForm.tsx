@@ -1,184 +1,166 @@
 'use client';
 
-import React from 'react';
 import {
     Box,
     Button,
-    Container,
-    Grid,
-    IconButton,
     Paper,
+    Stack,
     TextField,
     Typography,
+    Slider,
 } from '@mui/material';
-import { useForm, useFieldArray } from 'react-hook-form';
-import { AddCircle, RemoveCircle } from '@mui/icons-material';
-import { yupResolver } from '@hookform/resolvers/yup';
-import * as yup from 'yup';
+import { AddCircle, Delete } from '@mui/icons-material';
+import { Formik, FieldArray, getIn } from 'formik';
+import * as Yup from 'yup';
+import { useState } from 'react';
+import axios from 'axios';
 
-const skillSchema = yup.object().shape({
-    skills: yup
-        .array()
-        .of(
-            yup.object().shape({
-                name: yup.string().required('Skill name is required'),
-                percentage: yup
-                    .number()
-                    .typeError('Must be a number')
-                    .min(1, 'Min 1%')
-                    .max(100, 'Max 100%')
-                    .required('Percentage is required'),
-            })
-        )
-        .min(5, 'Minimum 5 skills are required')
-        .max(10, 'Maximum 10 skills allowed'),
+const skillSchema = Yup.object().shape({
+    name: Yup.string().required('Skill name is required'),
+    percentage: Yup.number()
+        .min(1, 'Percentage must be greater than 0')
+        .max(100, 'Max value is 100')
+        .required('Skill percentage is required'),
 });
 
-type SkillFormValues = {
-    skills: {
-        name: string;
-        percentage: number;
-    }[];
+
+const validationSchema = Yup.object().shape({
+    skills: Yup.array().of(skillSchema),
+});
+
+const initialSkill = {
+    name: '',
+    percentage: 0,
 };
 
-const SkillSetForm = () => {
-    const {
-        register,
-        control,
-        handleSubmit,
-        formState: { errors },
-        watch,
-    } = useForm<SkillFormValues>({
-        resolver: yupResolver(skillSchema),
-        defaultValues: {
-            skills: Array.from({ length: 5 }, () => ({ name: '', percentage: 0 })),
-        },
-    });
-
-    const { fields, append, remove } = useFieldArray({
-        control,
-        name: 'skills',
-    });
-
-    const onSubmit = (data: SkillFormValues) => {
-        console.log('Skill Set:', data);
-        alert('Skills Submitted!');
-    };
-
-    const lastIndex = fields.length - 1;
-    const lastName = watch(`skills.${lastIndex}.name`);
-    const lastPercentage = watch(`skills.${lastIndex}.percentage`);
-    const canAddMore =
-        fields.length < 10 &&
-        lastName?.trim() !== '' &&
-        lastPercentage !== undefined &&
-        !isNaN(Number(lastPercentage)) &&
-        Number(lastPercentage) > 0;
+export default function SkillsForm() {
+    const [submittedData, setSubmittedData] = useState<any>(null);
 
     return (
-        <Container maxWidth="sm" sx={{ py: 6 }}>
-            <Paper
-                elevation={3}
-                sx={{
-                    p: 4,
-                    background: 'linear-gradient(to right, #f3e5f5, #ffffff)',
-                    borderRadius: 3,
-                }}
-            >
-                <Typography variant="h5" fontWeight="bold" textAlign="center" gutterBottom>
-                    Skill Set
-                </Typography>
-                <Typography variant="body2" textAlign="center" color="text.secondary" mb={3}>
-                    Add 5 to 10 skills with their proficiency level.
+        <Box>
+            <Paper elevation={3} sx={{ p: 4, maxWidth: 700, mx: 'auto', mt: 5 }}>
+                <Typography variant="h5" gutterBottom>
+                    Skills
                 </Typography>
 
-                <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
-                    {fields.map((item, index) => (
-                        <Box
-                            key={item.id}
-                            sx={{
-                                mb: 2,
-                                p: 2,
-                                border: '1px solid #ccc',
-                                borderRadius: 2,
-                            }}
-                        >
-                            <Grid container spacing={2} alignItems="center">
-                                <Grid item xs={12}>
-                                    <TextField
-                                        label="Skill Name"
-                                        fullWidth
-                                        {...register(`skills.${index}.name`)}
-                                        error={!!errors.skills?.[index]?.name}
-                                        helperText={errors.skills?.[index]?.name?.message}
-                                    />
-                                </Grid>
-                                <Grid item xs={10}>
-                                    <TextField
-                                        label="Proficiency (%)"
-                                        type="number"
-                                        fullWidth
-                                        inputProps={{ min: 1, max: 100 }}
-                                        {...register(`skills.${index}.percentage`)}
-                                        error={!!errors.skills?.[index]?.percentage}
-                                        helperText={errors.skills?.[index]?.percentage?.message}
-                                        InputProps={{
-                                            inputProps: {
-                                                style: {
-                                                    MozAppearance: 'textfield',
-                                                },
-                                            },
-                                            sx: {
-                                                '& input[type=number]::-webkit-outer-spin-button': {
-                                                    WebkitAppearance: 'none',
-                                                    margin: 0,
-                                                },
-                                                '& input[type=number]::-webkit-inner-spin-button': {
-                                                    WebkitAppearance: 'none',
-                                                    margin: 0,
-                                                },
-                                            },
-                                        }}
-                                    />
-                                </Grid>
-                                <Grid item xs={2} sx={{ textAlign: 'center' }}>
-                                    {fields.length > 5 && (
-                                        <IconButton onClick={() => remove(index)} color="error">
-                                            <RemoveCircle />
-                                        </IconButton>
-                                    )}
-                                </Grid>
-                            </Grid>
-                        </Box>
-                    ))}
+                <Formik
+                    initialValues={{ skills: [initialSkill] }}
+                    validationSchema={validationSchema}
+                    onSubmit={async (values, { resetForm }) => {
+                        const payload = {
+                            userId: '67f7c5e7aa90ee9cdc106a77',
+                            skills: values.skills,
+                        };
 
-                    {/* Conditionally render Add More */}
-                    {canAddMore && (
-                        <Box display="flex" justifyContent="flex-start" mb={3}>
-                            <Button
-                                onClick={() => append({ name: '', percentage: 0 })}
-                                startIcon={<AddCircle />}
-                                variant="outlined"
-                                sx={{ width: 'fit-content' }}
-                            >
-                                Add More
-                            </Button>
-                        </Box>
+                        try {
+                            const res = await axios.post('http://localhost:3000/api/skillset', payload, {
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    Authorization: `Bearer ${"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3ZjdjNWU3YWE5MGVlOWNkYzEwNmE3NyIsImVtYWlsIjoidGVzdDAxQG1haWwuY29tIiwiaWF0IjoxNzQ0MzUxMjA0LCJleHAiOjE3NDQ5NTYwMDR9.yjCoF5I9b1D4BYir9N9Vx2JIFJ_UGyYrBYgUi2Lsl0c"}`,
+
+                                },
+                            });
+
+                            if (!res.ok) throw new Error('Failed to submit skills');
+                            setSubmittedData(payload);
+                            resetForm();
+                        } catch (error) {
+                            console.error('Submission error:', error);
+                        }
+                    }}
+                >
+                    {({ values, handleChange, handleSubmit, setFieldValue, touched, errors }) => (
+                        <form onSubmit={handleSubmit}>
+                            <FieldArray name="skills">
+                                {({ push, remove }) => (
+                                    <Stack spacing={4}>
+                                        {values.skills.map((item, index) => {
+                                            const fieldName = `skills.${index}`;
+                                            return (
+                                                <Paper key={index} elevation={2} sx={{ p: 3 }}>
+                                                    <Stack spacing={2}>
+                                                        <TextField
+                                                            label="Skill Name"
+                                                            name={`${fieldName}.name`}
+                                                            fullWidth
+                                                            value={item.name}
+                                                            onChange={handleChange}
+                                                            error={
+                                                                getIn(touched, `${fieldName}.name`) &&
+                                                                Boolean(getIn(errors, `${fieldName}.name`))
+                                                            }
+                                                            helperText={
+                                                                getIn(touched, `${fieldName}.name`) &&
+                                                                getIn(errors, `${fieldName}.name`)
+                                                            }
+                                                        />
+
+                                                        <Box>
+                                                            <Typography gutterBottom>Proficiency: {item.percentage}%</Typography>
+                                                            <Slider
+                                                                name={`${fieldName}.percentage`}
+                                                                value={item.percentage}
+                                                                onChange={(_, value) =>
+                                                                    setFieldValue(`${fieldName}.percentage`, value)
+                                                                }
+                                                                step={1}
+                                                                min={0}
+                                                                max={100}
+                                                                valueLabelDisplay="auto"
+                                                            />
+                                                            {getIn(touched, `${fieldName}.percentage`) &&
+                                                                getIn(errors, `${fieldName}.percentage`) && (
+                                                                    <Typography color="error" variant="caption">
+                                                                        {getIn(errors, `${fieldName}.percentage`)}
+                                                                    </Typography>
+                                                                )}
+                                                        </Box>
+
+                                                        {index > 0 && (
+                                                            <Button
+                                                                onClick={() => remove(index)}
+                                                                size="small"
+                                                                variant="outlined"
+                                                                color="error"
+                                                                startIcon={<Delete />}
+                                                            >
+                                                                Remove
+                                                            </Button>
+                                                        )}
+                                                    </Stack>
+                                                </Paper>
+                                            );
+                                        })}
+
+                                        <Box display="flex" justifyContent="flex-start">
+                                            <Button
+                                                variant="outlined"
+                                                startIcon={<AddCircle />}
+                                                onClick={() => push(initialSkill)}
+                                            >
+                                                Add More Skill
+                                            </Button>
+                                        </Box>
+
+                                        <Button type="submit" variant="contained" color="primary">
+                                            Submit Skills
+                                        </Button>
+                                    </Stack>
+                                )}
+                            </FieldArray>
+                        </form>
                     )}
-
-                    {typeof errors.skills?.message === 'string' && (
-                        <Typography color="error" sx={{ mb: 2 }}>
-                            {errors.skills.message}
-                        </Typography>
-                    )}
-
-                    <Button type="submit" variant="contained" size="large" fullWidth>
-                        Submit Skills
-                    </Button>
-                </Box>
+                </Formik>
             </Paper>
-        </Container>
-    );
-};
 
-export default SkillSetForm;
+            {submittedData && (
+                <Box mt={5}>
+                    <Typography variant="h6" textAlign="center">
+                        Submitted Skills:
+                    </Typography>
+                    <pre>{JSON.stringify(submittedData, null, 2)}</pre>
+                </Box>
+            )}
+        </Box>
+    );
+}
