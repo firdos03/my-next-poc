@@ -12,9 +12,10 @@ import { Formik, FieldArray, getIn } from 'formik';
 import * as Yup from 'yup';
 import dayjs from 'dayjs';
 import { useState } from 'react';
-import CustomDatePicker from './DatePicker'; // Reuse your existing component
 import { AddCircle, Delete } from '@mui/icons-material';
 import axios from 'axios';
+import CustomDatePicker from '../components/DatePicker';
+import { useRouter } from 'next/navigation';
 
 const educationSchema = Yup.object().shape({
     degree: Yup.string().required('Degree is required'),
@@ -44,6 +45,7 @@ const initialEducation = {
 };
 
 export default function EducationForm() {
+    const router = useRouter();
     const [submittedData, setSubmittedData] = useState<any>(null);
 
     return (
@@ -61,11 +63,13 @@ export default function EducationForm() {
                             const res = await axios.post('/api/education', values.education, {
                                 headers: {
                                     'Content-Type': 'application/json',
-                                    Authorization: `Bearer ${"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3ZjdjNWU3YWE5MGVlOWNkYzEwNmE3NyIsImVtYWlsIjoidGVzdDAxQG1haWwuY29tIiwiaWF0IjoxNzQ0MzUxMjA0LCJleHAiOjE3NDQ5NTYwMDR9.yjCoF5I9b1D4BYir9N9Vx2JIFJ_UGyYrBYgUi2Lsl0c"}`,
+                                    Authorization: `Bearer ${"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3ZjdjNWU3YWE5MGVlOWNkYzEwNmE3NyIsImVtYWlsIjoidGVzdDAxQG1haWwuY29tIiwiaWF0IjoxNzQ0OTU4OTE4LCJleHAiOjE3NDU1NjM3MTh9.vGVkjSCY2LIkpdMF9L9LDSG4vf5RRuRGgoW6c8L76JQ"}`,
 
                                 },
                             });
-
+                            setTimeout(() => {
+                                router.push("/skillsetform")
+                            }, 1000)
                             if (!res.data) throw new Error('Failed to submit data');
                             setSubmittedData(values.education);
                             resetForm();

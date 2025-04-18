@@ -10,7 +10,6 @@ import axios from "axios"
 
 
 const UserProfile = () => {
-    // const [userData, setUserData] = useState([]);
     const user = {
         fullName: 'John Doe',
         designation: 'Frontend Developer',
@@ -24,7 +23,6 @@ const UserProfile = () => {
 
 
     useEffect(() => {
-        // console.log("checking useEffect");
         // debugger
 
         const fetchUserData = async () => {

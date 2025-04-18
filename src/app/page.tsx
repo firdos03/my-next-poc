@@ -6,7 +6,7 @@
 
 
 // import EducationForm from "./components/EducationForm";
-import SkillsForm from "./components/SkillSetForm";
+import SkillsForm from "./skillsetform/page";
 // import WorkExperienceForm from "./components/WorkExperienceForm";
 // import UserProfile from "./components/UserProfile";
 // import EducationDisplay from "./components/EducationDisplay";

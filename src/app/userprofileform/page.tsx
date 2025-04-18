@@ -8,9 +8,9 @@ import {
 } from '@mui/material'
 import axios from 'axios'
 import { Formik, Form } from 'formik'
+import { useRouter } from 'next/navigation'
 import * as Yup from 'yup'
 
-// Validation Schema using Yup
 const validationSchema = Yup.object({
     fullName: Yup.string()
         .required('Full name is required')
@@ -26,6 +26,7 @@ const validationSchema = Yup.object({
 })
 
 export default function UserForm() {
+    const router = useRouter();
     const postUserData = async (userData: any) => {
         try {
             const response = await axios.post(
@@ -33,13 +34,15 @@ export default function UserForm() {
                 userData,
                 {
                     headers: {
-                        Authorization: `Bearer ${"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3ZjdjNWU3YWE5MGVlOWNkYzEwNmE3NyIsImVtYWlsIjoidGVzdDAxQG1haWwuY29tIiwiaWF0IjoxNzQ0MzUxMjA0LCJleHAiOjE3NDQ5NTYwMDR9.yjCoF5I9b1D4BYir9N9Vx2JIFJ_UGyYrBYgUi2Lsl0c"}`,
+                        Authorization: `Bearer ${"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3ZjdjNWU3YWE5MGVlOWNkYzEwNmE3NyIsImVtYWlsIjoidGVzdDAxQG1haWwuY29tIiwiaWF0IjoxNzQ0OTU4OTE4LCJleHAiOjE3NDU1NjM3MTh9.vGVkjSCY2LIkpdMF9L9LDSG4vf5RRuRGgoW6c8L76JQ"}`,
                         'Content-Type': 'application/json',
                     },
                 }
             )
 
-            
+            setTimeout(() => {
+                router.push("/workexperienceform")
+            }, 1000)
 
             console.log('User data posted successfully:', response.data)
         } catch (error) {
