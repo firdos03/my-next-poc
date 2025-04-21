@@ -17,47 +17,46 @@ const SkillBubbleCard = ({ skills }: { skills: Skill[] }) => {
     }
 
     return (
-        <>   <Box sx={{ mb: 3 }}>
-            <Typography variant="h6" fontWeight="bold">
-                Skill Set
-            </Typography>
-        </Box>
+        <>
+            <Box sx={{ mb: 3 }}>
+                <Typography variant="h6" fontWeight="bold">
+                    Skill Set
+                </Typography>
+            </Box>
+
             <Card
                 sx={{
                     p: 4,
-                    background: 'linear-gradient(to right, #e3f2fd, #ffffff)',
+                    background: 'linear-gradient(to right, #f0f4f8, #ffffff)',
                     borderRadius: 3,
-                    boxShadow: 2,
+                    boxShadow: 3,
                     display: 'flex',
                     flexDirection: 'column',
-                    minHeight: 300,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    height: 450,
                     overflow: 'visible',
+                    position: 'relative',
                 }}
             >
-                {/* Left-Aligned Heading */}
-
-
-                {/* Bubble Graph */}
                 <Box
                     sx={{
                         position: 'relative',
                         width: '100%',
-                        height: 300,
-                        display: 'flex',
-                        justifyContent: 'center',
+                        height: '100%',
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(5, 1fr)',
+                        gridTemplateRows: 'repeat(2, 1fr)',
+                        gap: 2,
+                        justifyItems: 'center',
                         alignItems: 'center',
                     }}
                 >
                     {paddedSkills.map((skill, index) => {
                         const percent = skill.percent || 0;
-                        const size = Math.max(100, percent * 3); // scale size
+                        const size = Math.max(80, percent * 2); // scale size
                         const color = colors[index % colors.length];
                         const hasData = !!skill.name;
-
-                        const angle = (index / 10) * 360;
-                        const radius = 100;
-                        const x = radius * Math.cos((angle * Math.PI) / 180);
-                        const y = radius * Math.sin((angle * Math.PI) / 180);
 
                         return (
                             <Tooltip
@@ -72,21 +71,16 @@ const SkillBubbleCard = ({ skills }: { skills: Skill[] }) => {
                                         height: size,
                                         backgroundColor: color,
                                         borderRadius: '50%',
-                                        position: 'absolute',
-                                        top: `calc(50% + ${y}px - ${size / 2}px)`,
-                                        left: `calc(50% + ${x}px - ${size / 2}px)`,
                                         display: 'flex',
                                         flexDirection: 'column',
                                         justifyContent: 'center',
                                         alignItems: 'center',
-                                        boxShadow: '4px 4px 0 rgba(0,0,0,0.15)',
+                                        boxShadow: '4px 4px 12px rgba(0, 0, 0, 0.1)',
                                         textAlign: 'center',
-                                        px: 1,
                                         transition: 'transform 0.3s ease, box-shadow 0.3s ease',
                                         '&:hover': {
                                             transform: 'scale(1.1)',
-                                            boxShadow: '6px 6px 10px rgba(0,0,0,0.2)',
-                                            zIndex: 10,
+                                            boxShadow: '6px 6px 15px rgba(0, 0, 0, 0.15)',
                                         },
                                     }}
                                 >
@@ -94,7 +88,7 @@ const SkillBubbleCard = ({ skills }: { skills: Skill[] }) => {
                                         sx={{
                                             fontWeight: 'bold',
                                             color: '#fff',
-                                            fontSize: '0.9rem',
+                                            fontSize: '0.85rem',
                                             lineHeight: 1.2,
                                         }}
                                     >
@@ -116,7 +110,8 @@ const SkillBubbleCard = ({ skills }: { skills: Skill[] }) => {
                         );
                     })}
                 </Box>
-            </Card></>
+            </Card>
+        </>
     );
 };
 

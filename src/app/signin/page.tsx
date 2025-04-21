@@ -1,18 +1,23 @@
 "use client";
-import React from 'react';
+import React, { useState } from 'react';
 import {
     Box,
     Button,
     Container,
+    IconButton,
+    InputAdornment,
     TextField,
     Typography,
-    Paper
+    Paper,
+    CircularProgress
 } from '@mui/material';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
-// ✅ Validation Schema
 const schema = yup.object().shape({
     email: yup.string().email('Invalid email').required('Email is required'),
     password: yup.string().required('Password is required'),
@@ -27,9 +32,42 @@ const SignInPage = () => {
         resolver: yupResolver(schema),
     });
 
-    const onSubmit = (data: any) => {
-        console.log(data);
-        alert('Sign in successful!');
+    const router = useRouter();
+
+    const [showPassword, setShowPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    const handleClickShowPassword = () => setShowPassword((prev) => !prev);
+
+    const onSubmit = async (data: any) => {
+        setLoading(true);
+        try {
+            const response = await fetch('http://localhost:3000/api/auth/signin', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                alert('Sign in successful!');
+                console.log('Success:', result.user.id);
+
+                localStorage.setItem("token", result.token);
+                localStorage.setItem("userId", result.user.id);
+                router.push("/userprofileform")
+            } else {
+                alert(result.message || 'Sign in failed!');
+            }
+        } catch (error) {
+            console.error('Network error:', error);
+            alert('Something went wrong. Please try again later.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -39,7 +77,6 @@ const SignInPage = () => {
                     Sign In
                 </Typography>
                 <Box component="form" noValidate onSubmit={handleSubmit(onSubmit)} sx={{ mt: 3 }}>
-                    {/* Email */}
                     <TextField
                         fullWidth
                         label="Email Address"
@@ -57,16 +94,24 @@ const SignInPage = () => {
                         }}
                     />
 
-                    {/* Password */}
                     <TextField
                         fullWidth
                         label="Password"
-                        type="password"
+                        type={showPassword ? "text" : "password"}
                         variant="outlined"
                         margin="normal"
                         {...register('password')}
                         error={!!errors.password}
                         helperText={errors.password?.message}
+                        InputProps={{
+                            endAdornment: (
+                                <InputAdornment position="end">
+                                    <IconButton onClick={handleClickShowPassword} edge="end">
+                                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                                    </IconButton>
+                                </InputAdornment>
+                            ),
+                        }}
                         FormHelperTextProps={{
                             sx: {
                                 color: 'red',
@@ -76,23 +121,22 @@ const SignInPage = () => {
                         }}
                     />
 
-                    {/* Submit Button */}
                     <Button
                         type="submit"
                         fullWidth
                         variant="contained"
                         size="large"
                         sx={{ mt: 3, py: 1.5, fontWeight: 'bold' }}
+                        disabled={loading}
                     >
-                        Sign In
+                        {loading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : 'Sign In'}
                     </Button>
 
-                    {/* Sign Up Redirect */}
                     <Typography variant="body2" align="center" sx={{ mt: 2 }}>
                         Don’t have an account?
-                        <a href="#" style={{ color: '#1976d2', textDecoration: 'underline', marginLeft: '5px' }}>
+                        <Link href="/signup" style={{ color: '#1976d2', textDecoration: 'underline' }}>
                             Sign up
-                        </a>
+                        </Link>
                     </Typography>
                 </Box>
             </Paper>

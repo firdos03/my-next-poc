@@ -14,6 +14,7 @@ import { Formik, FieldArray, getIn } from 'formik';
 import * as Yup from 'yup';
 import { useState } from 'react';
 import axios from 'axios';
+import Loader from '../components/Loader';
 
 const skillSchema = Yup.object().shape({
     name: Yup.string().required('Skill name is required'),
@@ -34,10 +35,12 @@ const initialSkill = {
 };
 
 export default function SkillsForm() {
+    const [isLoading, setIsLoading] = useState(false);
     const [submittedData, setSubmittedData] = useState<any>(null);
+    const token = localStorage.getItem("token");
 
     return (
-        <Box>
+        <> {isLoading ? <Loader /> : <Box>
             <Paper elevation={3} sx={{ p: 4, maxWidth: 700, mx: 'auto', mt: 5 }}>
                 <Typography variant="h5" gutterBottom>
                     Skills
@@ -47,16 +50,17 @@ export default function SkillsForm() {
                     initialValues={{ skills: [initialSkill] }}
                     validationSchema={validationSchema}
                     onSubmit={async (values, { resetForm }) => {
+                        setIsLoading(true);
                         const payload = {
                             userId: '67f7c5e7aa90ee9cdc106a77',
                             skills: values.skills,
                         };
 
                         try {
-                            const res = await axios.post('http://localhost:3000/api/skillset', payload, {
+                            const res = await axios.post('/api/skillset', payload, {
                                 headers: {
                                     'Content-Type': 'application/json',
-                                    Authorization: `Bearer ${"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3ZjdjNWU3YWE5MGVlOWNkYzEwNmE3NyIsImVtYWlsIjoidGVzdDAxQG1haWwuY29tIiwiaWF0IjoxNzQ0MzUxMjA0LCJleHAiOjE3NDQ5NTYwMDR9.yjCoF5I9b1D4BYir9N9Vx2JIFJ_UGyYrBYgUi2Lsl0c"}`,
+                                    Authorization: `Bearer ${token}`,
 
                                 },
                             });
@@ -66,6 +70,8 @@ export default function SkillsForm() {
                             resetForm();
                         } catch (error) {
                             console.error('Submission error:', error);
+                        } finally {
+                            setIsLoading(false);
                         }
                     }}
                 >
@@ -162,5 +168,6 @@ export default function SkillsForm() {
                 </Box>
             )}
         </Box>
+        }</>
     );
 }

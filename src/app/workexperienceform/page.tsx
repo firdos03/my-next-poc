@@ -18,6 +18,7 @@ import { AddCircle, Delete } from '@mui/icons-material';
 import axios from 'axios';
 import CustomDatePicker from '../components/DatePicker';
 import { useRouter } from 'next/navigation';
+import Loader from '../components/Loader';
 
 const workExperienceSchema = Yup.object().shape({
     company: Yup.string()
@@ -58,9 +59,11 @@ const initialWorkExperience = {
 export default function WorkExperienceForm() {
     const router = useRouter();
     const [submittedData, setSubmittedData] = useState<any>(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const token = localStorage.getItem("token");
 
     return (
-        <Box>
+        <>{isLoading ? <Loader /> : <Box>
             <Paper elevation={3} sx={{ p: 4, maxWidth: 700, mx: 'auto', mt: 5 }}>
                 <Typography variant="h5" gutterBottom>
                     Work Experience
@@ -70,6 +73,7 @@ export default function WorkExperienceForm() {
                     initialValues={{ workExperience: [initialWorkExperience] }}
                     validationSchema={validationSchema}
                     onSubmit={async (values, { resetForm }) => {
+                        setIsLoading(true);
                         const payload = values.workExperience.map((exp) => ({
                             company: exp.company,
                             jobTitle: exp.jobTitle,
@@ -84,19 +88,18 @@ export default function WorkExperienceForm() {
                             const res = await axios.post('/api/experience', payload, {
                                 headers: {
                                     'Content-Type': 'application/json',
-                                    Authorization: `Bearer ${"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3ZjdjNWU3YWE5MGVlOWNkYzEwNmE3NyIsImVtYWlsIjoidGVzdDAxQG1haWwuY29tIiwiaWF0IjoxNzQ0OTU4OTE4LCJleHAiOjE3NDU1NjM3MTh9.vGVkjSCY2LIkpdMF9L9LDSG4vf5RRuRGgoW6c8L76JQ"}`,
-
+                                    Authorization: `Bearer ${token}`,
                                 },
                             });
-                            setTimeout(() => {
-                                router.push("/educationform")
-                            }, 1000)
-                            if (!res.ok) throw new Error('Failed to submit data');
-                            setSubmittedData(payload);
 
+                            if (!res || res.status !== 200) throw new Error('Failed to submit data');
+                            setSubmittedData(payload);
                             resetForm();
+                            router.push("/educationform");
                         } catch (err) {
                             console.error('Error submitting data:', err);
+                        } finally {
+                            setIsLoading(false);
                         }
                     }}
                 >
@@ -219,5 +222,6 @@ export default function WorkExperienceForm() {
                 </Box>
             )}
         </Box>
+        }</>
     );
 }

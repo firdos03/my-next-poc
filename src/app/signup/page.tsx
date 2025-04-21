@@ -1,20 +1,25 @@
-"use client";
-import React from 'react';
+'use client';
+import React, { useState } from 'react';
 import {
     Box,
     Button,
     Checkbox,
+    CircularProgress,
     Container,
     FormControlLabel,
-    TextField,
-    Typography,
+    IconButton,
+    InputAdornment,
     Paper,
+    TextField,
+    Typography
 } from '@mui/material';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
-// ✅ Validation Schema
 const schema = yup.object().shape({
     fullName: yup.string().required('Full Name is required'),
     email: yup.string().email('Invalid email').required('Email is required'),
@@ -35,19 +40,51 @@ const SignUpPage = () => {
         resolver: yupResolver(schema),
     });
 
-    const onSubmit = (data: any) => {
-        console.log(data);
-        alert('Signup successful!');
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    const togglePasswordVisibility = () => setShowPassword(!showPassword);
+    const toggleConfirmPasswordVisibility = () => setShowConfirmPassword(!showConfirmPassword);
+
+    const router = useRouter();
+
+    const onSubmit = async (data: any) => {
+        setLoading(true);
+        try {
+            const response = await fetch('http://localhost:3000/api/auth/signup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                router.push("/signin")
+                alert('Signup successful!');
+                console.log('Success:', result);
+
+            } else {
+                alert(result.message || 'Signup failed!');
+            }
+        } catch (error) {
+            console.error('Network error:', error);
+            alert('Something went wrong. Please try again later.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
         <Container maxWidth="sm">
-            <Paper elevation={3} sx={{ padding: 4, mt: 6, borderRadius: 4 , mb:6}}>
+            <Paper elevation={3} sx={{ padding: 4, mt: 6, borderRadius: 4, mb: 6 }}>
                 <Typography variant="h4" align="center" gutterBottom>
                     Create an Account
                 </Typography>
                 <Box component="form" noValidate onSubmit={handleSubmit(onSubmit)} sx={{ mt: 3 }}>
-                    {/* Full Name */}
                     <TextField
                         fullWidth
                         label="Full Name"
@@ -57,15 +94,10 @@ const SignUpPage = () => {
                         error={!!errors.fullName}
                         helperText={errors.fullName?.message}
                         FormHelperTextProps={{
-                            sx: {
-                                color: 'red',
-                                fontSize: '0.85rem',
-                                marginLeft: "0px"
-                            },
+                            sx: { color: 'red', fontSize: '0.85rem', marginLeft: "0px" },
                         }}
                     />
 
-                    {/* Email */}
                     <TextField
                         fullWidth
                         label="Email Address"
@@ -75,62 +107,67 @@ const SignUpPage = () => {
                         error={!!errors.email}
                         helperText={errors.email?.message}
                         FormHelperTextProps={{
-                            sx: {
-                                color: 'red',
-                                fontSize: '0.85rem',
-                                marginLeft: "0px"
-                            },
+                            sx: { color: 'red', fontSize: '0.85rem', marginLeft: "0px" },
                         }}
                     />
 
-                    {/* Password */}
                     <TextField
                         fullWidth
                         label="Password"
-                        type="password"
+                        type={showPassword ? 'text' : 'password'}
                         variant="outlined"
                         margin="normal"
                         {...register('password')}
                         error={!!errors.password}
                         helperText={errors.password?.message}
+                        InputProps={{
+                            endAdornment: (
+                                <InputAdornment position="end">
+                                    <IconButton onClick={togglePasswordVisibility} edge="end">
+                                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                                    </IconButton>
+                                </InputAdornment>
+                            ),
+                        }}
                         FormHelperTextProps={{
-                            sx: {
-                                color: 'red',
-                                fontSize: '0.85rem',
-                                marginLeft: "0px"
-                            },
+                            sx: { color: 'red', fontSize: '0.85rem', marginLeft: "0px" },
                         }}
                     />
 
-                    {/* Confirm Password */}
                     <TextField
                         fullWidth
                         label="Confirm Password"
-                        type="password"
+                        type={showConfirmPassword ? 'text' : 'password'}
                         variant="outlined"
                         margin="normal"
                         {...register('confirmPassword')}
                         error={!!errors.confirmPassword}
                         helperText={errors.confirmPassword?.message}
+                        InputProps={{
+                            endAdornment: (
+                                <InputAdornment position="end">
+                                    <IconButton onClick={toggleConfirmPasswordVisibility} edge="end">
+                                        {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                                    </IconButton>
+                                </InputAdornment>
+                            ),
+                        }}
                         FormHelperTextProps={{
-                            sx: {
-                                color: 'red',
-                                fontSize: '0.85rem',
-                                marginLeft: "0px"
-                            },
+                            sx: { color: 'red', fontSize: '0.85rem', marginLeft: "0px" },
                         }}
                     />
 
-                    {/* Terms Checkbox */}
                     <FormControlLabel
                         control={<Checkbox {...register('terms')} color="primary" />}
                         label={
-                            <Typography variant="body2">
-                                I agree to the{' '}
-                                <a href="#" style={{ color: '#1976d2', textDecoration: 'underline' }}>
-                                    Terms and Conditions
-                                </a>
-                            </Typography>
+                            <>
+                                <Typography variant="body2" component="span">
+                                    I agree to the{' '}
+                                    <a href="#" style={{ color: '#1976d2', textDecoration: 'underline' }}>
+                                        Terms and Conditions
+                                    </a>
+                                </Typography>
+                            </>
                         }
                     />
                     {errors.terms && (
@@ -139,23 +176,22 @@ const SignUpPage = () => {
                         </Typography>
                     )}
 
-                    {/* Submit Button */}
                     <Button
                         type="submit"
                         fullWidth
                         variant="contained"
                         size="large"
                         sx={{ mt: 3, py: 1.5, fontWeight: 'bold' }}
+                        disabled={loading}
                     >
-                        Sign Up
+                        {loading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : 'Sign Up'}
                     </Button>
 
-                    {/* Login Redirect */}
                     <Typography variant="body2" align="center" sx={{ mt: 2 }}>
-                        Already have an account?
-                        <a href="#" style={{ color: '#1976d2', textDecoration: 'underline' }}>
+                        Already have an account?{' '}
+                        <Link href="/signin" style={{ color: '#1976d2', textDecoration: 'underline' }}>
                             Log in
-                        </a>
+                        </Link>
                     </Typography>
                 </Box>
             </Paper>

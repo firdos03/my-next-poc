@@ -13,7 +13,6 @@ interface WorkExperienceBarProps {
 
 const WorkExperienceBar: React.FC<WorkExperienceBarProps> = ({ experience }) => {
     const totalYears = experience.reduce((sum, exp) => sum + exp.years, 0);
-
     return (
         <>  <Typography variant="h6" fontWeight="bold" mb={2}>
             Work Experience Breakdown
