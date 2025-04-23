@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import connectDB from "@/app/lib/db";
 import Experience from "@/app/models/Experience";
 
-const JWT_SECRET = process.env.JWT_SECRET || "your_secret";
+const JWT_SECRET = process.env.JWT_SECRET || "";
 
 export async function POST(req: NextRequest) {
   await connectDB();
@@ -82,7 +82,7 @@ export async function GET(req: NextRequest) {
   await connectDB();
 
   const { searchParams } = new URL(req.url);
-  const userId = searchParams.get("userId");
+  const userId = searchParams.get("userId");  
 
   try {
     const experiences = userId

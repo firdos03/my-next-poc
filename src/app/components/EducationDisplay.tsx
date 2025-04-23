@@ -1,29 +1,14 @@
 import React from 'react';
 import { Box, Typography, Card, CardContent, Grid } from '@mui/material';
 
-const educationData = [
-    {
-        degree: 'B.Tech in Computer Science',
-        year: '2021',
-    },
-    {
-        degree: '12th - Science',
-        year: '2017',
-    },
-    {
-        degree: '10th - SSC',
-        year: '2015',
-    },
-];
-
-const EducationDisplay = () => {
+const EducationDisplay = ({ userEducation }: any) => {
     return (
         <Box sx={{ width: '100%' }}>
             <Typography variant="h5" fontWeight="bold" mb={2}>
                 Education
             </Typography>
             <Grid container spacing={14}>
-                {educationData.map((edu, index) => (
+                {userEducation.map((element: any, index: number) => (
                     <Grid item xs={12} md={4} key={index}>
                         <Card
                             sx={{
@@ -34,10 +19,10 @@ const EducationDisplay = () => {
                         >
                             <CardContent>
                                 <Typography variant="h6" fontWeight="bold">
-                                    {edu.degree}
+                                    {`${element.degree} in ${element.fieldOfStudy}`}
                                 </Typography>
                                 <Typography variant="body1" color="text.secondary">
-                                    Year of Completion: {edu.year}
+                                    Year of Completion:  {new Date(element.endDate).getFullYear()}
                                 </Typography>
                             </CardContent>
                         </Card>

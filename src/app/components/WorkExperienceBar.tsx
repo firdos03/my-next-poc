@@ -3,8 +3,10 @@ import React from 'react';
 import { Box, Card, Typography } from '@mui/material';
 
 interface Experience {
-    companyName: string;
-    years: number;
+    company: string;
+    startDate: string;
+    endDate: string;
+    currentlyWorking: boolean;
 }
 
 interface WorkExperienceBarProps {
@@ -12,11 +14,34 @@ interface WorkExperienceBarProps {
 }
 
 const WorkExperienceBar: React.FC<WorkExperienceBarProps> = ({ experience }) => {
-    const totalYears = experience.reduce((sum, exp) => sum + exp.years, 0);
+    const msToYears = (ms: number) => ms / (1000 * 60 * 60 * 24 * 365);
+
+    let totalExperienceInMs = 0;
+    const companyExperienceMap: Record<string, number> = {};
+
+    experience.forEach((exp) => {
+        const start = new Date(exp.startDate);
+        const end = exp.currentlyWorking ? new Date() : new Date(exp.endDate);
+        const duration = end.getTime() - start.getTime();
+
+        totalExperienceInMs += duration;
+
+        if (companyExperienceMap[exp.company]) {
+            companyExperienceMap[exp.company] += duration;
+        } else {
+            companyExperienceMap[exp.company] = duration;
+        }
+    });
+
+    const totalYears = Number(msToYears(totalExperienceInMs).toFixed(2));
+    const backgroundColors = ['#42a5f5', '#66bb6a', '#ffca28', '#ef5350', '#ab47bc'];
+
     return (
-        <>  <Typography variant="h6" fontWeight="bold" mb={2}>
-            Work Experience Breakdown
-        </Typography>
+        <>
+            <Typography variant="h6" fontWeight="bold" mb={2}>
+                Work Experience Breakdown
+            </Typography>
+
             <Card
                 sx={{
                     p: 4,
@@ -25,14 +50,12 @@ const WorkExperienceBar: React.FC<WorkExperienceBarProps> = ({ experience }) => 
                     boxShadow: 2,
                     display: 'flex',
                     flexDirection: 'column',
-                    // minHeight: 300,
                     overflow: 'visible',
                 }}
             >
                 <Box sx={{ width: '100%' }}>
-
                     <Typography fontWeight="bold" mb={2}>
-                        Total Work Experience {totalYears} year{totalYears > 1 ? 's' : ''}
+                        Total Work Experience: {totalYears} year{totalYears !== 1 ? 's' : ''}
                     </Typography>
 
                     <Box
@@ -44,16 +67,13 @@ const WorkExperienceBar: React.FC<WorkExperienceBarProps> = ({ experience }) => 
                             boxShadow: 2,
                         }}
                     >
-                        {experience.map((exp, index) => {
-                            const widthPercent = (exp.years / totalYears) * 100;
-
-                            const backgroundColors = ['#42a5f5', '#66bb6a', '#ffca28', '#ef5350', '#ab47bc'];
-
+                        {Object.entries(companyExperienceMap).map(([company, ms], index) => {
+                            const percent = (ms / totalExperienceInMs) * 100;
                             return (
                                 <Box
                                     key={index}
                                     sx={{
-                                        width: `${widthPercent}%`,
+                                        width: `${percent}%`,
                                         backgroundColor: backgroundColors[index % backgroundColors.length],
                                         display: 'flex',
                                         justifyContent: 'center',
@@ -64,16 +84,14 @@ const WorkExperienceBar: React.FC<WorkExperienceBarProps> = ({ experience }) => 
                                         whiteSpace: 'nowrap',
                                     }}
                                 >
-                                    {exp.companyName} ({exp.years} yr{exp.years > 1 ? 's' : ''})
+                                    {company} ({msToYears(ms).toFixed(2)}y)
                                 </Box>
                             );
                         })}
-
                     </Box>
                 </Box>
-
-            </Card></>
-
+            </Card>
+        </>
     );
 };
 

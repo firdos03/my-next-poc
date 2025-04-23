@@ -1,16 +1,67 @@
 'use client';
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Avatar, Box, Card, Divider, Typography } from '@mui/material';
 import WorkExperienceBar from '../components/WorkExperienceBar';
 import EducationDisplay from '../components/EducationDisplay';
 import SkillBubbleCard from '../components/SkillSet';
+import axios from 'axios';
+import Loader from '../components/Loader';
+import CustomSnackbar from '../components/CustomSnackbar';
 
 const UserProfile = () => {
+    const [userProfile, setUserProfile] = useState<any>([])
+    const [userExperience, setUserExperience] = useState<any>([]);
+    const [userEducation, setUserEducation] = useState<any>([]);
+    const [userSkills, setUserSkills] = useState<any>([]);
+
+    const [loading, setLoading] = useState<boolean>(true);
+    const [snackbar, setSnackbar] = useState({
+        open: false,
+        message: '',
+        type: 'error' as 'success' | 'error',
+    });
 
 
-    const userId = localStorage.getItem("userId");
+    const userId = typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
-    console.log("userId", userId);
+    const fetchUserData = useCallback(async () => {
+        try {
+            const res = await axios.get(
+                `http://localhost:3000/api/userfullprofile?userId=${userId}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
+
+            if (res.data.profile) {
+                setUserProfile([res.data.profile]);
+            } else {
+                setUserProfile([]);
+            }
+            setUserExperience(res.data.experiences || []);
+            setUserEducation(res.data.education || []);
+            setUserSkills(res.data.skills || []);
+            setSnackbar({ open: true, message: 'Profile loaded successfully.', type: 'success' });
+        } catch (error) {
+            setSnackbar({ open: true, message: 'Failed to fetch user data.', type: 'error' });
+        } finally {
+            setLoading(false);
+        }
+    }, [token, userId]);
+
+    useEffect(() => {
+        fetchUserData();
+    }, [fetchUserData]);
+
+    if (loading) {
+        return (
+            <Loader />
+        );
+    }
 
     const user = {
         fullName: 'John Doe',
@@ -53,60 +104,74 @@ const UserProfile = () => {
                 p: 2,
             }}
         >
-            <Card
-                sx={{
-                    width: '100%',
-                    maxWidth: 1000,
-                    height: 'auto',
-                    p: 4,
-                    display: 'flex',
-                    flexDirection: { xs: 'column', md: 'row' },
-                    alignItems: 'center',
-                    background: 'linear-gradient(to right, #e0f7fa, #ffffff)',
-                    borderRadius: 4,
-                    boxShadow: 3,
-                }}
-            >
-                <Box sx={{ flexShrink: 0, mb: { xs: 2, md: 0 } }}>
-                    <Avatar
-                        src={user.profileImage}
-                        alt={user.fullName}
-                        sx={{ width: 120, height: 120, mb: 2 }}
-                    />
-                </Box>
-
-                <Divider orientation="vertical" flexItem sx={{ mx: { xs: 0, md: 4 }, borderColor: '#bbb' }} />
-
-                <Box sx={{ textAlign: { xs: 'center', md: 'left' }, mb: { xs: 2, md: 0 } }}>
-                    <Typography variant="h5" fontWeight="bold">
-                        {user.fullName}
-                    </Typography>
-                    <Typography variant="subtitle1" color="text.secondary">
-                        {user.designation}
-                    </Typography>
-                    <Typography variant="body1">Location: {user.location}</Typography>
-                    <Typography variant="body1">Mobile: {user.mobile}</Typography>
-                </Box>
-
-                <Divider orientation="vertical" flexItem sx={{ mx: { xs: 0, md: 4 }, borderColor: '#bbb' }} />
-
-                <Box sx={{ display: "flex", flexDirection: 'column', alignItems: 'center', width: { xs: '100%', md: '30%' } }}>
-                    <Typography variant="h6" fontWeight={500}>Jobs Applied: {user.jobsApplied}</Typography>
-                    <Typography variant="h6" fontWeight={500}>Jobs Actioned: {user.jobsActioned}</Typography>
-                </Box>
-            </Card>
-
             <Box sx={{ width: "100%", padding: "20px 80px", mt: 4 }}>
-                <WorkExperienceBar experience={experienceData} />
+                <Card
+                    sx={{
+                        width: '100%',
+                        height: 'auto',
+                        p: 4,
+                        display: 'flex',
+                        flexDirection: { xs: 'column', md: 'row' },
+                        alignItems: 'center',
+                        background: 'linear-gradient(to right, #e0f7fa, #ffffff)',
+                        borderRadius: 4,
+                        boxShadow: 3,
+                    }}
+                >
+
+                    {userProfile.map((element: any) => {
+                        return (
+                            <><Box sx={{ flexShrink: 0, mb: { xs: 2, md: 0 } }}>
+                                <Avatar
+                                    src={"sample.com"}
+                                    alt={element.fullName && element.fullName.toUpperCase()}
+                                    sx={{ width: 120, height: 120, mb: 2 }}
+                                />
+                            </Box>
+
+                                <Divider orientation="vertical" flexItem sx={{ mx: { xs: 0, md: 4 }, borderColor: '#bbb' }} />
+
+                                <Box sx={{ textAlign: { xs: 'center', md: 'left' }, mb: { xs: 2, md: 0 } }}>
+                                    <Typography variant="h5" fontWeight="bold">
+                                        {element.fullName}
+                                    </Typography>
+                                    <Typography variant="subtitle1" color="text.secondary">
+                                        {element.designation}
+                                    </Typography>
+                                    <Typography variant="body1">Location: {element.location}</Typography>
+                                    <Typography variant="body1">Mobile: {element.mobileNumber}</Typography>
+                                </Box></>
+                        )
+                    })}
+
+                    <Divider orientation="vertical" flexItem sx={{ mx: { xs: 0, md: 4 }, borderColor: '#bbb' }} />
+
+                    <Box sx={{ display: "flex", flexDirection: 'column', alignItems: 'center', width: { xs: '100%', md: '30%' } }}>
+                        <Typography variant="h6" fontWeight={500}>Jobs Applied: {user.jobsApplied}</Typography>
+                        <Typography variant="h6" fontWeight={500}>Jobs Actioned: {user.jobsActioned}</Typography>
+                    </Box>
+
+                </Card>
             </Box>
 
             <Box sx={{ width: "100%", padding: "20px 80px", mt: 4 }}>
-                <EducationDisplay />
+                <WorkExperienceBar experience={userExperience || experienceData} />
+            </Box>
+
+            <Box sx={{ width: "100%", padding: "20px 80px", mt: 4 }}>
+                <EducationDisplay userEducation={userEducation} />
             </Box>
 
             <Box sx={{ width: "100%", padding: "20px 80px", mt: 4, height: "600px" }}>
-                <SkillBubbleCard skills={skillsData} />
+                <SkillBubbleCard skills={userSkills || skillsData} />
             </Box>
+
+            <CustomSnackbar
+                open={snackbar.open}
+                message={snackbar.message}
+                type={snackbar.type}
+                onClose={() => setSnackbar({ ...snackbar, open: false })}
+            />
         </Box>
     );
 };

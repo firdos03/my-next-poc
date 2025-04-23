@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import connectDB from "@/app/lib/db";
 import SkillSet from "@/app/models/SkillSet";
 
-const JWT_SECRET = process.env.JWT_SECRET || "your_secret";
+const JWT_SECRET = process.env.JWT_SECRET || "";
 
 const getUserIdFromToken = (req: NextRequest): string | null => {
   const authHeader = req.headers.get("authorization");

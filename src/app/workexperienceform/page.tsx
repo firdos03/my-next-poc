@@ -13,12 +13,13 @@ import {
 import { Formik, FieldArray, getIn } from 'formik';
 import * as Yup from 'yup';
 import dayjs from 'dayjs';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AddCircle, Delete } from '@mui/icons-material';
 import axios from 'axios';
 import CustomDatePicker from '../components/DatePicker';
 import { useRouter } from 'next/navigation';
 import Loader from '../components/Loader';
+import BackButton from '../components/BackButton';
 
 const workExperienceSchema = Yup.object().shape({
     company: Yup.string()
@@ -60,11 +61,19 @@ export default function WorkExperienceForm() {
     const router = useRouter();
     const [submittedData, setSubmittedData] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [redirect, setRedirect] = useState(false);
     const token = localStorage.getItem("token");
+
+    useEffect(() => {
+        if (redirect) {
+            router.push('/educationform');
+        }
+    }, [redirect, router]);
 
     return (
         <>{isLoading ? <Loader /> : <Box>
             <Paper elevation={3} sx={{ p: 4, maxWidth: 700, mx: 'auto', mt: 5 }}>
+                <BackButton />
                 <Typography variant="h5" gutterBottom>
                     Work Experience
                 </Typography>
@@ -93,9 +102,8 @@ export default function WorkExperienceForm() {
                             });
 
                             if (!res || res.status !== 200) throw new Error('Failed to submit data');
+                            setRedirect(true)
                             setSubmittedData(payload);
-                            resetForm();
-                            router.push("/educationform");
                         } catch (err) {
                             console.error('Error submitting data:', err);
                         } finally {

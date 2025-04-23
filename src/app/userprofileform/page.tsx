@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import {
     Button,
@@ -6,30 +6,18 @@ import {
     Typography,
     Paper,
     Stack,
-} from '@mui/material'
-import axios from 'axios'
-import { Formik, Form } from 'formik'
-import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
-import * as Yup from 'yup'
-import Loader from '../components/Loader'
-import { log } from 'node:console'
+} from '@mui/material';
+import axios from 'axios';
+import { Formik, Form } from 'formik';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import * as Yup from 'yup';
+import Loader from '../components/Loader';
 
 const validationSchema = Yup.object({
     fullName: Yup.string()
         .required('Full name is required')
         .min(3, 'Too short'),
-
-    profileImage: Yup.mixed()
-        .nullable()
-        .test('fileSize', 'File too large', value =>
-            !value || (value instanceof File && value.size <= 5 * 1024 * 1024)
-        )
-        .test('fileType', 'Unsupported file format', value =>
-            !value || (value instanceof File &&
-                ['image/jpg', 'image/jpeg', 'image/png', 'image/webp'].includes(value.type))
-        ),
-
     location: Yup.string().required('Location is required'),
     designation: Yup.string().required('Designation is required'),
     mobileNumber: Yup.string()
@@ -38,46 +26,43 @@ const validationSchema = Yup.object({
 });
 
 export default function UserForm() {
-    const [loader, setLoader] = useState(false);
     const router = useRouter();
-    const token = localStorage.getItem("token");
-    const userId = localStorage.getItem("useId");
+    const [loader, setLoader] = useState(false);
+    const [redirect, setRedirect] = useState(false);
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
+    useEffect(() => {
+        if (redirect) {
+            router.push('/workexperienceform');
+        }
+    }, [redirect, router]);
 
     const postUserData = async (userData: any) => {
         setLoader(true);
         try {
-            const formData = new FormData();
-            for (const key in userData) {
-                formData.append(key, userData[key]);
-            }
-            console.log("formData", formData);
-            const payLoad = {
-                ...formData, userId
-            }
-            console.log("payLoad", payLoad);
             const response = await axios.post(
                 "http://localhost:3000/api/userprofile",
-                formData,
+                userData,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
-                        'Content-Type': 'multipart/form-data',
+                        'Content-Type': 'application/json',
                     },
                 }
             );
-
-            console.log('User data posted successfully:', response.data);
-            router.push("/workexperienceform");
+            setRedirect(true)
         } catch (error) {
-            console.error('Error posting user data:', error)
+            console.error('Error posting user data:', error);
         } finally {
             setLoader(false);
         }
-    }
+    };
 
     return (
         <>
-            {(loader) ? <Loader /> : (
+            {loader ? (
+                <Loader />
+            ) : (
                 <Paper elevation={3} sx={{ p: 4, maxWidth: 500, mx: 'auto', mt: 8 }}>
                     <Typography variant="h5" component="h1" gutterBottom align="center">
                         User Profile Form
@@ -86,7 +71,6 @@ export default function UserForm() {
                     <Formik
                         initialValues={{
                             fullName: '',
-                            profileImage: null,
                             location: '',
                             designation: '',
                             mobileNumber: '',
@@ -105,7 +89,6 @@ export default function UserForm() {
                             handleBlur,
                             values,
                             isSubmitting,
-                            setFieldValue,
                         }) => (
                             <Form noValidate>
                                 <Stack spacing={3}>
@@ -119,23 +102,6 @@ export default function UserForm() {
                                         error={touched.fullName && Boolean(errors.fullName)}
                                         helperText={touched.fullName && errors.fullName}
                                     />
-
-                                    <input
-                                        accept="image/*"
-                                        type="file"
-                                        name="profileImage"
-                                        onChange={(event) => {
-                                            const file = event.currentTarget.files?.[0];
-                                            setFieldValue("profileImage", file);
-                                        }}
-                                        onBlur={handleBlur}
-                                        style={{ marginTop: 8 }}
-                                    />
-                                    {touched.profileImage && errors.profileImage && (
-                                        <div style={{ color: 'red', fontSize: '0.85rem' }}>
-                                            {errors.profileImage}
-                                        </div>
-                                    )}
 
                                     <TextField
                                         label="Location"

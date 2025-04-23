@@ -4,7 +4,7 @@ import { Box, Typography, Card, Tooltip } from '@mui/material';
 
 interface Skill {
     name?: string;
-    percent?: number;
+    percentage?: number;
 }
 
 const colors = ['#f4c542', '#e74c3c', '#e67e22', '#3498db', '#9b59b6', '#1abc9c', '#2ecc71', '#34495e', '#16a085', '#d35400'];
@@ -53,7 +53,7 @@ const SkillBubbleCard = ({ skills }: { skills: Skill[] }) => {
                     }}
                 >
                     {paddedSkills.map((skill, index) => {
-                        const percent = skill.percent || 0;
+                        const percent = skill.percentage || 0;
                         const size = Math.max(80, percent * 2); // scale size
                         const color = colors[index % colors.length];
                         const hasData = !!skill.name;

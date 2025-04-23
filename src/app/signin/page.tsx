@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Box,
     Button,
@@ -17,6 +17,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import CustomSnackbar from '../components/CustomSnackbar';
 
 const schema = yup.object().shape({
     email: yup.string().email('Invalid email').required('Email is required'),
@@ -36,6 +37,18 @@ const SignInPage = () => {
 
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [redirect, setRedirect] = useState(false);
+    const [snackbar, setSnackbar] = useState({
+        open: false,
+        message: '',
+        type: 'success' as 'success' | 'error',
+    });
+
+    useEffect(() => {
+        if (redirect) {
+            router.push('/userprofileform');
+        }
+    }, [redirect, router]);
 
     const handleClickShowPassword = () => setShowPassword((prev) => !prev);
 
@@ -53,14 +66,12 @@ const SignInPage = () => {
             const result = await response.json();
 
             if (response.ok) {
-                alert('Sign in successful!');
-                console.log('Success:', result.user.id);
-
+                setSnackbar({ open: true, message: 'Sign in successful!', type: 'success' });
                 localStorage.setItem("token", result.token);
                 localStorage.setItem("userId", result.user.id);
-                router.push("/userprofileform")
+                setRedirect(true)
             } else {
-                alert(result.message || 'Sign in failed!');
+                setSnackbar({ open: true, message: 'Sign in failed!', type: 'error' });
             }
         } catch (error) {
             console.error('Network error:', error);
@@ -140,6 +151,12 @@ const SignInPage = () => {
                     </Typography>
                 </Box>
             </Paper>
+            <CustomSnackbar
+                open={snackbar.open}
+                message={snackbar.message}
+                type={snackbar.type}
+                onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+            />
         </Container>
     );
 };

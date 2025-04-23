@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Box,
     Button,
@@ -19,6 +19,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import CustomSnackbar from '../components/CustomSnackbar';
 
 const schema = yup.object().shape({
     fullName: yup.string().required('Full Name is required'),
@@ -43,15 +44,28 @@ const SignUpPage = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [redirect, setRedirect] = useState(false);
+    const [snackbar, setSnackbar] = useState({
+        open: false,
+        message: '',
+        type: 'success' as 'success' | 'error',
+    });
+    const router = useRouter();
+
 
     const togglePasswordVisibility = () => setShowPassword(!showPassword);
     const toggleConfirmPasswordVisibility = () => setShowConfirmPassword(!showConfirmPassword);
 
-    const router = useRouter();
+    useEffect(() => {
+        if (redirect) {
+            router.push('/signin');
+        }
+    }, [redirect, router]);
 
     const onSubmit = async (data: any) => {
         setLoading(true);
         try {
+            
             const response = await fetch('http://localhost:3000/api/auth/signup', {
                 method: 'POST',
                 headers: {
@@ -63,16 +77,17 @@ const SignUpPage = () => {
             const result = await response.json();
 
             if (response.ok) {
-                router.push("/signin")
-                alert('Signup successful!');
+                setRedirect(true);
+                setSnackbar({ open: true, message: 'Signup successful!', type: 'success' });
                 console.log('Success:', result);
 
             } else {
-                alert(result.message || 'Signup failed!');
+                setSnackbar({ open: true, message: result.message || 'Signup failed!', type: 'error' });
             }
         } catch (error) {
             console.error('Network error:', error);
             alert('Something went wrong. Please try again later.');
+            setSnackbar({ open: true, message: 'Something went wrong. Please try again later.', type: 'success' });
         } finally {
             setLoading(false);
         }
@@ -81,9 +96,11 @@ const SignUpPage = () => {
     return (
         <Container maxWidth="sm">
             <Paper elevation={3} sx={{ padding: 4, mt: 6, borderRadius: 4, mb: 6 }}>
+
                 <Typography variant="h4" align="center" gutterBottom>
                     Create an Account
                 </Typography>
+
                 <Box component="form" noValidate onSubmit={handleSubmit(onSubmit)} sx={{ mt: 3 }}>
                     <TextField
                         fullWidth
@@ -194,8 +211,18 @@ const SignUpPage = () => {
                         </Link>
                     </Typography>
                 </Box>
+
             </Paper>
+
+            <CustomSnackbar
+                open={snackbar.open}
+                message={snackbar.message}
+                type={snackbar.type}
+                onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+            />
         </Container>
+
+
     );
 };
 

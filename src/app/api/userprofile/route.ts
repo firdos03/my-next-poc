@@ -3,9 +3,7 @@ import connectDB from "@/app/lib/db";
 import UserProfile from "@/app/models/UserProfile";
 import jwt from "jsonwebtoken";
 
-// Create or update user profile
-
-const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret"; // Replace with your real secret or load from env
+const JWT_SECRET = process.env.JWT_SECRET || "";
 
 export async function POST(req: NextRequest) {
   await connectDB();
@@ -18,7 +16,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let decodedToken: any;
   try {
     decodedToken = jwt.verify(token, JWT_SECRET);
@@ -37,7 +34,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { fullName, profileImage, location, designation, mobileNumber } = body;
+  const { fullName, location, designation, mobileNumber } = body;
 
   if (!fullName) {
     return NextResponse.json(
@@ -51,7 +48,6 @@ export async function POST(req: NextRequest) {
       { userId },
       {
         fullName,
-        profileImage,
         location,
         designation,
         mobileNumber,
@@ -70,18 +66,15 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// Get user profile
 export async function GET(req: NextRequest) {
   await connectDB();
 
-  // const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
   const authHeader = req.headers.get("authorization");
   const token = authHeader?.split(" ")[1];
   if (!token) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let decodedToken: any;
   try {
     decodedToken = jwt.verify(token, JWT_SECRET);

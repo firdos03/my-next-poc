@@ -11,12 +11,13 @@ import {
 import { Formik, FieldArray, getIn } from 'formik';
 import * as Yup from 'yup';
 import dayjs from 'dayjs';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AddCircle, Delete } from '@mui/icons-material';
 import axios from 'axios';
 import CustomDatePicker from '../components/DatePicker';
 import { useRouter } from 'next/navigation';
 import Loader from '../components/Loader';
+import BackButton from '../components/BackButton';
 
 const educationSchema = Yup.object().shape({
     degree: Yup.string().required('Degree is required'),
@@ -49,12 +50,20 @@ export default function EducationForm() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const [submittedData, setSubmittedData] = useState<any>(null);
+    const [redirect, setRedirect] = useState(false);
     const token = localStorage.getItem("token");
+
+    useEffect(() => {
+        if (redirect) {
+            router.push('/skillsetform');
+        }
+    }, [redirect, router]);
 
     return (
         <>
             {isLoading ? <Loader /> : <Box>
                 <Paper elevation={3} sx={{ p: 4, maxWidth: 700, mx: 'auto', mt: 5 }}>
+                    <BackButton />
                     <Typography variant="h5" gutterBottom>
                         Education Details
                     </Typography>
@@ -72,7 +81,8 @@ export default function EducationForm() {
 
                                     },
                                 });
-                                router.push("/skillsetform")
+                                // router.push("/skillsetform")
+                                setRedirect(true)
                                 if (!res.data) throw new Error('Failed to submit data');
                                 setSubmittedData(values.education);
                                 resetForm();

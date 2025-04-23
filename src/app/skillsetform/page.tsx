@@ -1,5 +1,4 @@
 'use client';
-
 import {
     Box,
     Button,
@@ -12,9 +11,11 @@ import {
 import { AddCircle, Delete } from '@mui/icons-material';
 import { Formik, FieldArray, getIn } from 'formik';
 import * as Yup from 'yup';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
 import Loader from '../components/Loader';
+import { useRouter } from 'next/navigation';
+import BackButton from '../components/BackButton';
 
 const skillSchema = Yup.object().shape({
     name: Yup.string().required('Skill name is required'),
@@ -35,13 +36,24 @@ const initialSkill = {
 };
 
 export default function SkillsForm() {
+    const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const [submittedData, setSubmittedData] = useState<any>(null);
+    const [redirect, setRedirect] = useState(false);
+
     const token = localStorage.getItem("token");
+    const userId = localStorage.getItem("userId");
+
+    useEffect(() => {
+        if (redirect) {
+            router.push('/userprofile');
+        }
+    }, [redirect, router]);
 
     return (
         <> {isLoading ? <Loader /> : <Box>
             <Paper elevation={3} sx={{ p: 4, maxWidth: 700, mx: 'auto', mt: 5 }}>
+                <BackButton />
                 <Typography variant="h5" gutterBottom>
                     Skills
                 </Typography>
@@ -50,9 +62,10 @@ export default function SkillsForm() {
                     initialValues={{ skills: [initialSkill] }}
                     validationSchema={validationSchema}
                     onSubmit={async (values, { resetForm }) => {
+                        // debugger
                         setIsLoading(true);
                         const payload = {
-                            userId: '67f7c5e7aa90ee9cdc106a77',
+                            userId: `${userId}`,
                             skills: values.skills,
                         };
 
@@ -61,12 +74,12 @@ export default function SkillsForm() {
                                 headers: {
                                     'Content-Type': 'application/json',
                                     Authorization: `Bearer ${token}`,
-
                                 },
                             });
 
-                            if (!res.ok) throw new Error('Failed to submit skills');
                             setSubmittedData(payload);
+                            // router.push("/userprofile");
+                            setRedirect(true)
                             resetForm();
                         } catch (error) {
                             console.error('Submission error:', error);
