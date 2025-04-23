@@ -1,8 +1,9 @@
 "use client";
 import React from "react";
 import { LocalizationProvider } from "@mui/x-date-pickers";
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker as MUIDatePicker } from "@mui/x-date-pickers/DatePicker";
+import dayjs from "dayjs";
 
 type Props = {
     formik: any;
@@ -15,10 +16,10 @@ const CustomDatePicker: React.FC<Props> = ({ formik, label, name, value }) => {
     const { setFieldValue, setFieldTouched, touched, errors } = formik;
 
     return (
-        <LocalizationProvider dateAdapter={AdapterDateFns}>
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
             <MUIDatePicker
                 label={label}
-                value={value || null}
+                value={value ? dayjs(value) : null}
                 onChange={(date) => setFieldValue(name, date)}
                 onBlur={() => setFieldTouched(name, true)}
                 slotProps={{
